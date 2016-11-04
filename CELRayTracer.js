@@ -21,8 +21,11 @@ var LIGHT1_X = 50;
 var LIGHT2_X = -50;
 var LIGHT1_Y = 50;
 var LIGHT2_Y = 50;
-var LIGHT1_Z = 30;
+var LIGHT1_Z = 50;
 var LIGHT2_Z = 50;
+var CAMERA = vec3(0, 100, 300);
+var AT = vec3(0.0, 0.0, 0.0);
+var UP = vec3(0.0, 0.0, 1.0);
 
 
 var light1 = vec3(LIGHT1_X, LIGHT1_Y, LIGHT1_Z);
@@ -64,10 +67,53 @@ window.onload = function init()
 	
 	// Set up view
 	
-	theta[0] = 60;
-	theta[1] = 10;
-	theta[2] = 35;
+	theta[0] = 0;
+	theta[1] = 0;
+	theta[2] = 0;
 	
+/* 	var shape = new Shape();
+	shape.drawType = gl.TRIANGLES;
+	shape.startIndex = 0;
+	shape.length = 3;
+	shape.color = vec4(0,1,0,1);
+	
+	vertices.push(vec4(0,50,0,1));
+	vertices.push(vec4(0,0,0,1));
+	vertices.push(vec4(50,50,0,1));
+	
+	shapeList.push(shape); */
+	
+	
+	// Z-axis arrow
+	var line = new Shape();
+	line.drawType = gl.LINES;
+	line.startIndex = vertices.length;
+	line.length = 2;
+	line.color = vec4(1, 0, 0, 1);
+	vertices.push(vec4(0, 0, 0, 1));
+	vertices.push(vec4(0, 0, 100, 1));
+	shapeList.push(line);
+	
+	// Y-axis arrow
+	var line = new Shape();
+	line.drawType = gl.LINES;
+	line.startIndex = vertices.length;
+	line.length = 2;
+	line.color = vec4(0, 0, 1, 1);
+	vertices.push(vec4(0, 0, 0, 1));
+	vertices.push(vec4(0, 100, 0, 1));
+	shapeList.push(line);
+	
+	// X-axis arrow
+	var line = new Shape();
+	line.drawType = gl.LINES;
+	line.startIndex = vertices.length;
+	line.length = 2;
+	line.color = vec4(0, 1, 0, 1);
+	vertices.push(vec4(0, 0, 0, 1));
+	vertices.push(vec4(100, 0, 0, 1));
+	
+	shapeList.push(line);
 	
 	// Load shaders and initialize attribute buffers
 	
@@ -99,5 +145,55 @@ function render() {
 		c[i] = Math.cos(angles[i]);
 		s[i] = Math.sin(angles[i]);
 	}
+	
+	// Rotation
+	
+	var rx = mat4 (1.0, 0.0, 0.0, 0.0,
+	           0.0, c[0], -s[0], 0.0,
+			   0.0, s[0], c[0], 0.0,
+			   0.0, 0.0, 0.0, 1.0);
+				   
+	var ry = mat4 (c[1], 0.0, s[1], 0.0,
+			   0.0, 1.0, 0.0, 0.0,
+			   -s[1], 0.0, c[1], 0.0,
+			   0.0, 0.0, 0.0, 1.0);
+	
+	var rz = mat4 (c[2], -s[2], 0.0, 0.0,
+			   s[2], c[2], 0.0, 0.0,
+			   0.0, 0.0, 1.0, 0.0,
+			   0.0, 0.0, 0.0, 1.0);
+	
+	tz1 = mat4 (1.0, 0.0, 0.0, -50/2.0,
+			   0.0, 1.0, 0.0, -50/2.0,
+			   0.0, 0.0, 1.0, -50/2.0,
+			   0.0, 0.0, 0.0, 1.0);
+			   
+	tz2 = mat4 (1.0, 0.0, 0.0, 50/2.0,
+			   0.0, 1.0, 0.0, 50/2.0,
+			   0.0, 0.0, 1.0, 50/2.0,
+			   0.0, 0.0, 0.0, 1.0);
+	
+	var looking = lookAt(
+					CAMERA, // Eye
+					AT, // At
+					UP); // Up
+	projection = perspective(45.0, aspect, 1, 20 * 100);
+	var rotation = mult(rz, mult(ry, rx));
+	modelView = mult(looking, mult(tz2, mult(rotation, tz1)));
+	
+	gl.uniformMatrix4fv (modelViewLoc, false, flatten(modelView));
+	gl.uniformMatrix4fv (projectionLoc, false, flatten(projection));
+	
+	
+	for ( i = 0; i < shapeList.length; i++) {
+		gl.uniform4fv(colorLoc, shapeList[i].color);
+		gl.drawArrays(shapeList[i].drawType, shapeList[i].startIndex, shapeList[i].length);
+	}
+	
+	
+	// Set up shadow projection
+	shadowProjection = mat4();
+	shadowProjection[3][3] = 0;
+	shadowProjection[3][1] = -1/light1[1];
 	
 }
