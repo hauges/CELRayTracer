@@ -91,6 +91,8 @@ function configureImageTexture() {
 		handleLoadedTexture(wallTexture);
 	};
 	wallTexture.image.src = "hills.jpg";
+	canvas.drawImage(wallTexture.image, 0, 0);
+	
 }
 
 // Images
@@ -187,13 +189,14 @@ window.onload = function init()
 	wall.startIndex = vertices.length;
 	wall.length = 4;
 	wall.color = vec4(0, 0, 0, 1);
-	vertices.push(vec4(1000, -1000, 1000, 1));
-	vertices.push(vec4(-1000, -1000, 1000, 1));
+	vertices.push(vec4(500, -100, 500, 1));
+	vertices.push(vec4(-1000, -1000, 500, 1));
 	vertices.push(vec4(-1000, -1000, 0, 1));
-	vertices.push(vec4(1000, -1000, 0, 1));
+	vertices.push(vec4(500, -1000, 0, 1));
 	wall.ignoreShadow = true;
 	shapeList.push(wall);
 	
+	// http://webglfundamentals.org/webgl/lessons/webgl-image-processing.html
 	
 	// Load shaders and initialize attribute buffers
 	
