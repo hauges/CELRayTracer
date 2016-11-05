@@ -6,6 +6,7 @@ var modelviewLoc;
 var projectionLoc;
 
 var grassTexture;
+var wallTexture;
 
 
 var shapeList = [];
@@ -24,7 +25,7 @@ var LIGHT1_Y = 50;
 var LIGHT2_Y = 50;
 var LIGHT1_Z = 50;
 var LIGHT2_Z = 50;
-var CAMERA = vec3(160, 600, 160);
+var CAMERA = vec3(160, 600, 140);
 var AT = vec3(0.0, 0.0, 0.0);
 var UP = vec3(0.0, 0.0, 1.0);
 var TEXSIZE = 256;
@@ -54,6 +55,7 @@ var Shape = function () {
 	this.ignoreShadow = false;
 };
 
+
 function configureGroundTexture() {
 	
 	var image1 = new Uint8Array(4*TEXSIZE * TEXSIZE);
@@ -79,6 +81,30 @@ function configureGroundTexture() {
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, 
 		gl.NEAREST_MIPMAP_LINEAR);
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+}
+
+
+function configureImageTexture() {
+	wallTexture = gl.createTexture();
+	wallTexture.image = new Image();
+	wallTexture.image.onload = function () {
+		handleLoadedTexture(wallTexture);
+	};
+	wallTexture.image.src = "hills.jpg";
+}
+
+// Images
+// http://learningwebgl.com/blog/?p=507
+// https://msdn.microsoft.com/en-us/library/dn385805(v=vs.85).aspx
+// http://stackoverflow.com/questions/12250953/drawing-an-image-using-webgl
+// https://www.khronos.org/webgl/wiki/Tutorial
+function handleLoadedTexture(texture) {
+	gl.bindTexture(gl.TEXTURE_2D, texture);
+	gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+	gl.texImage2D(gl.TEXTURE_2D,  0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+	gl.bindTexture(gl.TEXTURE_2D, null);
 }
 
 window.onload = function init() 
@@ -113,6 +139,7 @@ window.onload = function init()
 	lineZ.color = vec4(1, 0, 0, 1);
 	vertices.push(vec4(0, 0, 0, 1));
 	vertices.push(vec4(0, 0, 100, 1));
+	lineZ.ignoreShadow = true;
 	shapeList.push(lineZ);
 	
 	// Y-axis arrow
@@ -123,6 +150,7 @@ window.onload = function init()
 	lineY.color = vec4(0, 0, 1, 1);
 	vertices.push(vec4(0, 0, 0, 1));
 	vertices.push(vec4(0, 100, 0, 1));
+	lineY.ignoreShadow =  true;
 	shapeList.push(lineY);
 	
 	// X-axis arrow
@@ -152,6 +180,20 @@ window.onload = function init()
 	vertices.push(vec4(-1000, -1000, 0, 1));
 	ground.ignoreShadow = true;
 	shapeList.push(ground);
+	
+	// Create back wall
+	var wall = new Shape();
+	wall.drawType = gl.LINE_LOOP;
+	wall.startIndex = vertices.length;
+	wall.length = 4;
+	wall.color = vec4(0, 0, 0, 1);
+	vertices.push(vec4(1000, -1000, 1000, 1));
+	vertices.push(vec4(-1000, -1000, 1000, 1));
+	vertices.push(vec4(-1000, -1000, 0, 1));
+	vertices.push(vec4(1000, -1000, 0, 1));
+	wall.ignoreShadow = true;
+	shapeList.push(wall);
+	
 	
 	// Load shaders and initialize attribute buffers
 	
@@ -253,7 +295,7 @@ function render() {
 	gl.uniformMatrix4fv(modelViewLoc, false, flatten(modelView));
 	gl.uniform4fv(colorLoc, SHADOW_COLOR);
 	for(var i = 0; i < shapeList.length; i++) {
-		if (shapeList[i].length != 6) { // Handle the ground issue
+		if (!shapeList[i].ignoreShadow) { // Handle the ground issue
 			gl.drawArrays(shapeList[i].drawType, shapeList[i].startIndex, 
 				shapeList[i].length);
 		}
