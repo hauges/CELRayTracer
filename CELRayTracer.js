@@ -109,30 +109,7 @@ function handleLoadedTexture(texture) {
 	gl.bindTexture(gl.TEXTURE_2D, null);
 }
 
-window.onload = function init() 
-{
-	canvas = document.getElementById("gl-canvas");
-	gl = WebGLUtils.setupWebGL(canvas);
-	if ( !gl ) 
-	{
-		alert ( "WebGL isn't available");
-	}
-	
-	// 
-	// Configure WebGL
-	// 
-	
-	gl.viewport(0, 0, canvas.width, canvas.height);
-	aspect = canvas.width/canvas.height;
-	gl.clearColor(1, 1, 1, 1);
-	gl.enable(gl.DEPTH_TEST);
-	
-	// Set up view
-	
-	theta[0] = 0;
-	theta[1] = 0;
-	theta[2] = 0;
-	
+function createAxes() {
 	// Z-axis arrow
 	var lineZ = new Shape();
 	lineZ.drawType = gl.LINES;
@@ -165,8 +142,9 @@ window.onload = function init()
 	vertices.push(vec4(100, 0, 0, 1));
 	lineX.ignoreShadow = true;
 	shapeList.push(lineX);
-	
-	
+}
+
+function createWalls() {
 	// Create ground
 	
 	var ground = new Shape();
@@ -189,12 +167,56 @@ window.onload = function init()
 	wall.startIndex = vertices.length;
 	wall.length = 4;
 	wall.color = vec4(0, 0, 0, 1);
-	vertices.push(vec4(500, -100, 500, 1));
+	vertices.push(vec4(500, -1000, 500, 1));
 	vertices.push(vec4(-1000, -1000, 500, 1));
 	vertices.push(vec4(-1000, -1000, 0, 1));
 	vertices.push(vec4(500, -1000, 0, 1));
 	wall.ignoreShadow = true;
 	shapeList.push(wall);
+}
+
+function createSimpleShapes() {
+	var square = new Shape();
+	square.drawType = gl.TRIANGLES;
+	square.startIndex = vertices.length;
+	square.length = 6;
+	square.color = vec4(0, .25, .75, 1);
+	vertices.push(vec4(-25, -100, 10,1));
+	vertices.push(vec4(-25, -100, 100,1));
+	vertices.push(vec4(25, -100, 100,1));
+	vertices.push(vec4(25, -100, 100,1));
+	vertices.push(vec4(25, -100, 10,1));
+	vertices.push(vec4(-25, -100, 10,1));
+	shapeList.push(square);
+}
+
+window.onload = function init() 
+{
+	canvas = document.getElementById("gl-canvas");
+	gl = WebGLUtils.setupWebGL(canvas);
+	if ( !gl ) 
+	{
+		alert ( "WebGL isn't available");
+	}
+	
+	// 
+	// Configure WebGL
+	// 
+	
+	gl.viewport(0, 0, canvas.width, canvas.height);
+	aspect = canvas.width/canvas.height;
+	gl.clearColor(1, 1, 1, 1);
+	gl.enable(gl.DEPTH_TEST);
+	
+	// Set up view
+	
+	theta[0] = 0;
+	theta[1] = 0;
+	theta[2] = 0;
+	
+	createAxes();
+	createWalls();
+	createSimpleShapes();
 	
 	// http://webglfundamentals.org/webgl/lessons/webgl-image-processing.html
 	
@@ -287,11 +309,11 @@ function render() {
 			shapeList[i].length);
 	}
 	
-	
+	var tempModelView = modelView;
 	// Set up shadow projection
 	shadowProjection1 = mat4();
 	shadowProjection1[3][3] = 0;
-	shadowProjection1[3][1] = -1/light1[1];
+	shadowProjection1[3][1] = -1/light1[0];
 	modelView = mult(modelView, translate(light1[0], light1[1], light1[2]));
 	modelView = mult(modelView, shadowProjection1);
 	modelView = mult(modelView, translate(-light1[0], -light1[1], -light1[2]));
@@ -304,6 +326,7 @@ function render() {
 		}
 	}
 	
+	modelView = tempModelView // Needed to reset to model vieww of objects being drawn.
 	shadowProjection2 = mat4();
 	shadowProjection2[3][3] = 0;
 	shadowProjection2[3][1] = -1/light2[1];
