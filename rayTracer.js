@@ -221,5 +221,11 @@ function equation3D(point1, point2) {
 }
 
 function lineIntersection(obj, ray) {
-    
+    var initPoint = ray.start;
+	var x;
+	var y;
+	var z;
+	for(var i = 0; i < 1000; i++) { // 1000 is temporary
+		
+	}
 }
