@@ -22,9 +22,9 @@ var frameBuffer = [];
 
 var backgroundColor = {
 	red: 0,
-	blue: 0,
-	green: 0,
-	alpha: 255
+	blue: 1,
+	green: 1,
+	alpha: 1
 };
 
 function Vector(_x, _y, _z) {
@@ -95,17 +95,28 @@ window.onload = function init() {
 	// 
 	
 	gl.viewport(0, 0, canvas.width, canvas.height);
+	width = canvas.width;
+	height = canvas.height;
+	maxX = width;
+	maxY = height;
 	aspect = canvas.width/canvas.height;
 	gl.clearColor(1, 1, 1, 1);
 	
-	for(var i = -1; i < 1; i+= 2/canvas.width) {
-		for(var j = 1; j > -1; j-= 2/canvas.height) {
-			vertices.push(vec2(i, j));
-			locColors.push(vec4(Math.abs(i), Math.abs(j), Math.abs(i - j), 1));
-		}
-	}
+	// for(var i = -1; i < 1; i+= 2/canvas.width) {
+		// for(var j = 1; j > -1; j-= 2/canvas.height) {
+			// vertices.push(vec2(i, j));
+			// frameBuffer.push(vec4(Math.abs(i), Math.abs(j), Math.abs(i - j), 1));
+		// }
+	// }
+	
+	// vertices.push(vec2(0, 0));
+	// vertices.push(vec2(2/canvas.width, 2/canvas.height));
+	// frameBuffer.push(vec3(0, 1, 0));
+	// frameBuffer.push(vec3(1, 0, 0));
 	
 	// vertices.push(vec2(-1, 1));
+	
+	createImage();
 	
 	// Load shaders and initialize attribute buffers
 	
@@ -114,10 +125,10 @@ window.onload = function init() {
 	
 	cBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, flatten(locColors), gl.STATIC_DRAW);
+	gl.bufferData(gl.ARRAY_BUFFER, flatten(frameBuffer), gl.STATIC_DRAW);
 
 	cPosition = gl.getAttribLocation( program, "cPosition" );
-	gl.vertexAttribPointer( cPosition, 3, gl.FLOAT, false, 0, 0 );
+	gl.vertexAttribPointer( cPosition, 4, gl.FLOAT, false, 0, 0 );
 	gl.enableVertexAttribArray( cPosition );
 	
 	var vBuffer = gl.createBuffer();
@@ -130,9 +141,8 @@ window.onload = function init() {
 	render();
 }
 
-function render() {
-	gl.clear( gl.COLOR_BUFFER_BIT);
-    var view = camera.peripheral / 180 * Math.PI * 2;
+function createImage() {
+	var view = camera.peripheral / 180 * Math.PI * 2;
     var heightWidthRatio = height / width;
     var halfWidth = Math.tan(view);
     var halfHeight = heightWidthRatio * halfWidth;
@@ -159,12 +169,15 @@ function render() {
                                 camera.vector.z + x.z + y.z);
 
             var color = trace(ray, 0);
-            frameBuffer.push(color.red);
-            frameBuffer.push(color.green);
-            frameBuffer.push(color.blue);
-            frameBuffer.push(color.alpha);
+			
+			vertices.push(vec2(i * 2 / width - 1, j * 2 / height - 1))
+			frameBuffer.push(vec4(color.red, color.green, color.blue, color.alpha));
         }
     }
+}
+
+function render() {
+	//gl.clear( gl.COLOR_BUFFER_BIT);
 
     // draw the frame image here
 	
