@@ -1,11 +1,11 @@
-var width = 500;
-var height = 500;
-var depth = 500;
+var width = 512;
+var height = 512;
+var depth = 512;
 var minX = 0;
 var maxX = width;
 var minY = 0;
 var maxY = height;
-var minZ = 02;
+var minZ = 0;
 var maxZ = depth;
 
 var vertices = [];
@@ -22,8 +22,8 @@ var frameBuffer = [];
 
 var backgroundColor = {
 	red: 0,
-	blue: 1,
 	green: 1,
+	blue: 1,
 	alpha: 1
 };
 
@@ -37,9 +37,9 @@ var camera = {
     location: {
         x: width / 2,
         y: height / 2,
-        z: 0
+        z: -depth / 2
     },
-    peripheral: 60,
+    peripheral: 45,
     vector: {
         x: 0,
         y: 0,
@@ -70,14 +70,20 @@ var objects = [ // add objects here (needs atleas a color and points)
         type: 'line',
         start: {
             x: 0,
-            y: 0,
-            z: maxZ / 2
+            y: 50,
+            z: 0
         },
         end: {
             x: maxX,
-            y: maxY,
-            z: maxZ / 2
-        }
+            y: 50,
+            z: 0
+        },
+		color: {
+			red: 0,
+			green: 1,
+			blue: 0,
+			alpha: 1
+		}
     }
 ];
 
@@ -142,42 +148,25 @@ window.onload = function init() {
 }
 
 function createImage() {
-	var view = camera.peripheral / 180 * Math.PI * 2;
-    var heightWidthRatio = height / width;
-    var halfWidth = Math.tan(view);
-    var halfHeight = heightWidthRatio * halfWidth;
-    var camerawidth = halfWidth * 2;
-    var cameraheight = halfHeight * 2;
-    var pixelWidth = camerawidth / (width - 1);
-    var pixelHeight = cameraheight / (height - 1);
+	var ray = {
+		start: camera.location
+	}
 
-    var ray = {
-        start: camera.location
-    }
+	for(var i = 0; i < width; i++) {
+		for(var j = 0; j < height; j++) {
+			var canvasPoint = new Vector(i, j, 0);
+			ray.vector = equation3D(camera.location, canvasPoint);
 
-    for(var i = 0; i < width; i++) {
-        for(var j = 0; j < height; j++) {
-            var x = new Vector(camera.right.x * (i * pixelWidth) - halfWidth,
-                                camera.right.y * (i * pixelWidth) - halfWidth,
-                                camera.right.z * (i * pixelWidth) - halfWidth);
-            var y = new Vector(camera.up.x * (j * pixelHeight) - halfHeight,
-                                camera.up.y * (j * pixelHeight) - halfHeight,
-                                camera.up.z * (j * pixelHeight) - halfHeight);
-
-            ray.vector = unitVec(camera.vector.x + x.x + y.x,
-                                camera.vector.y + x.y + y.y,
-                                camera.vector.z + x.z + y.z);
-
-            var color = trace(ray, 0);
+			var color = trace(ray, 0);
 			
 			vertices.push(vec2(i * 2 / width - 1, j * 2 / height - 1))
 			frameBuffer.push(vec4(color.red, color.green, color.blue, color.alpha));
-        }
-    }
+		}
+	}
 }
 
 function render() {
-	//gl.clear( gl.COLOR_BUFFER_BIT);
+	gl.clear( gl.COLOR_BUFFER_BIT);
 
     // draw the frame image here
 	
@@ -225,6 +214,10 @@ function detectCollision(ray) {
 // surface
 function getColor(ray, object, point, n, depth) {
     return object.color; // will require a lot more for lighting 
+}
+
+function equation3D(point1, point2) {
+	return unitVec(point1.x - point2.x, point1.y - point2.y, point1.z - point2.z);
 }
 
 function lineIntersection(obj, ray) {
