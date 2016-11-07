@@ -7,32 +7,27 @@
 	<script id="vertex-shader" type="x-shader/x-vertex">
 
 	attribute vec4 vPosition;
-	uniform   mat4 modelView;
-	uniform   mat4 projection;
+	attribute vec3 cPosition;
 	
-	varying vec2 vTexCoord;
-	varying vec2 fTexCoord;
+	varying vec4 fColor;
 
 	void
 	main()
 	{
-		gl_Position = projection * modelView * vPosition;
-		
-		fTexCoord = vTexCoord;
+		gl_PointSize = 1.0;
+		gl_Position = vPosition;
+		fColor = vec4(cPosition, 1.0);
 	}
 	</script>
 
 	<script id="fragment-shader" type="x-shader/x-fragment">
 	precision mediump float;
-	uniform vec4 color;
-	varying vec2 fTexCoord;
-	uniform sampler2D Tex0;
+	varying vec4 fColor;
 
 	void
 	main()
 	{
-		// gl_FragColor = color * (texture2D(Tex0, fTexCoord));
-		gl_FragColor = color;
+		gl_FragColor = fColor;
 	}
 	
 	</script>
@@ -41,9 +36,10 @@
 	<script type="text/javascript" src="./Common/webgl-utils.js"></script>
 	<script type="text/javascript" src="./Common/initShaders.js"></script>
 	<script type="text/javascript" src="./Common/MV.js"></script>
-	<script type="text/javascript" src="CELRayTracer.js"></script>
+	<!-- <script type="text/javascript" src="CELRayTracer.js"></script> -->
+	<script type="text/javascript" src="rayTracer.js"></script>
 
-	<canvas id="gl-canvas" width="512" height="512" style="border:1px solid black;">
+	<canvas id="gl-canvas" width="512" height="512" style="border:1px solid white;">
 	Oops ... your browser doesn't support the HTML5 canvas element
 	</canvas>
 	<p>

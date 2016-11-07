@@ -8,11 +8,26 @@ var maxY = height;
 var minZ = 02;
 var maxZ = depth;
 
+var vertices = [];
+
+var locColors = [];
+
+var vPosition, cBuffer, cPosition;
+
+var canvas;
+var gl;
+var colorLoc;
+
 var frameBuffer = [];
 
-var backgroundColor = vec4(0.0, 0.0, 0.0, 1.0);
+var backgroundColor = {
+	red: 0,
+	blue: 0,
+	green: 0,
+	alpha: 255
+};
 
-function Vector(_x, _y, z) {
+function Vector(_x, _y, _z) {
     this.x = _x;
     this.y = _y;
     this.z = _z;
@@ -50,7 +65,7 @@ var lights = [ // can add as many lights as possible
     }
 ];
 
-objects = [ // add objects here (needs atleas a color and points)
+var objects = [ // add objects here (needs atleas a color and points)
     {
         type: 'line',
         start: {
@@ -66,10 +81,60 @@ objects = [ // add objects here (needs atleas a color and points)
     }
 ];
 
+
+window.onload = function init() {
+	canvas = document.getElementById("gl-canvas");
+	gl = WebGLUtils.setupWebGL(canvas);
+	if ( !gl ) 
+	{
+		alert ( "WebGL isn't available");
+	}
+	
+	// 
+	// Configure WebGL
+	// 
+	
+	gl.viewport(0, 0, canvas.width, canvas.height);
+	aspect = canvas.width/canvas.height;
+	gl.clearColor(1, 1, 1, 1);
+	
+	for(var i = -1; i < 1; i+= 2/canvas.width) {
+		for(var j = 1; j > -1; j-= 2/canvas.height) {
+			vertices.push(vec2(i, j));
+			locColors.push(vec4(Math.abs(i), Math.abs(j), Math.abs(i - j), 1));
+		}
+	}
+	
+	// vertices.push(vec2(-1, 1));
+	
+	// Load shaders and initialize attribute buffers
+	
+	var program = initShaders(gl, "vertex-shader", "fragment-shader");
+	gl.useProgram(program);
+	
+	cBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, flatten(locColors), gl.STATIC_DRAW);
+
+	cPosition = gl.getAttribLocation( program, "cPosition" );
+	gl.vertexAttribPointer( cPosition, 3, gl.FLOAT, false, 0, 0 );
+	gl.enableVertexAttribArray( cPosition );
+	
+	var vBuffer = gl.createBuffer();
+	gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer );
+	gl.bufferData( gl.ARRAY_BUFFER, flatten(vertices), gl.STATIC_DRAW );
+
+	var vPosition = gl.getAttribLocation( program, "vPosition" );
+	gl.vertexAttribPointer( vPosition, 2, gl.FLOAT, false, 0, 0 );
+	gl.enableVertexAttribArray( vPosition );
+	render();
+}
+
 function render() {
+	gl.clear( gl.COLOR_BUFFER_BIT);
     var view = camera.peripheral / 180 * Math.PI * 2;
     var heightWidthRatio = height / width;
-    var halfWidth = Math.tan(fovRadians);
+    var halfWidth = Math.tan(view);
     var halfHeight = heightWidthRatio * halfWidth;
     var camerawidth = halfWidth * 2;
     var cameraheight = halfHeight * 2;
@@ -102,6 +167,9 @@ function render() {
     }
 
     // draw the frame image here
+	
+	
+	gl.drawArrays(gl.POINTS, 0, vertices.length);
 }
 
 function unitVec(x, y, z) {
