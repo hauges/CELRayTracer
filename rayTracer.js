@@ -200,9 +200,9 @@ function detectCollision(ray) {
         distance: null,
         object: null
     }
-
-    for(var obj in objects) {
+    for(var i = 0; i < objects.length; i++) {
         // check to see if there is an intersection and if its closer than firstObj
+		var obj = objects[i];
         if(obj.type == 'line') {
             var result = lineIntersection(obj, ray);
 
@@ -222,11 +222,5 @@ function equation3D(point1, point2) {
 }
 
 function lineIntersection(obj, ray) {
-    var initPoint = ray.start;
-	var x;
-	var y;
-	var z;
-	for(var i = 0; i < 1000; i++) { // 1000 is temporary
-		
-	}
+	
 }
