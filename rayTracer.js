@@ -68,19 +68,30 @@ var lights = [ // can add as many lights as possible
 
 var objects = [ // add objects here (needs atleas a color and points)
     {
-        type: 'line',
-        start: {
-            x: 0,
-            y: 50,
-            z: 0
+        type: 'sphere',
+        center: {
+            x: 200,
+            y: 200,
+            z: 200
         },
-        end: {
-            x: maxX,
-            y: 50,
-            z: 0
-        },
+        radius: 50,
 		color: {
 			red: 0,
+			green: 1,
+			blue: 0,
+			alpha: 1
+		}
+    },
+	{
+        type: 'sphere',
+        center: {
+            x: 400,
+            y: 400,
+            z: 400
+        },
+        radius: 50,
+		color: {
+			red: 1,
 			green: 1,
 			blue: 0,
 			alpha: 1
@@ -181,17 +192,13 @@ function unitVec(x, y, z) {
 }
 
 function trace(ray, depth) {
-    if(depth > 1) { // I think 1 is right... This may have to be changed
-        return;
-    }
-
     var firstObj = detectCollision(ray);
 
     if(firstObj.distance == null) {
         return backgroundColor;
     }
 
-    return getColor();
+    return getColor(firstObj.object);
 }
 
 // intersectScene
@@ -203,9 +210,12 @@ function detectCollision(ray) {
     for(var i = 0; i < objects.length; i++) {
         // check to see if there is an intersection and if its closer than firstObj
 		var obj = objects[i];
-        if(obj.type == 'line') {
-            var result = lineIntersection(obj, ray);
-
+        if(obj.type == 'sphere') {
+            var distance = sphereIntersection(obj, ray);
+			if(distance < firstObj.distance) {
+				firstObj.distance = distance;
+				firstObj.object = obj;
+			}
         }
     }
 
@@ -213,7 +223,7 @@ function detectCollision(ray) {
 }
 
 // surface
-function getColor(ray, object, point, n, depth) {
+function getColor(object) {
     return object.color; // will require a lot more for lighting 
 }
 
@@ -221,6 +231,21 @@ function equation3D(point1, point2) {
 	return unitVec(point1.x - point2.x, point1.y - point2.y, point1.z - point2.z);
 }
 
-function lineIntersection(obj, ray) {
-	
+function sphereIntersection(obj, ray) {
+	var rayStartToSphhere = vec3(
+		obj.center.x - ray.start.x,
+		obj.center.y - ray.start.y,
+		obj.center.z - ray.start.z
+	);
+	var rayVec3 = vec3(
+		ray.vector.x,
+		ray.vector.y,
+		ray.vector.z
+	);
+	var vectorLength = dot(rayStartToSphhere, rayVec3);
+	var rayStartToSphhereLength = dot(rayStartToSphhere, rayStartToSphhere);
+	var d = Math.pow(obj.radius, 2) - rayStartToSphhereLength + Math.pow(vectorLength, 2);
+	if(d >= 0) {
+		return vectorLength - Math.sqrt(d);
+	}
 }
