@@ -63,7 +63,12 @@ var lights = [ // can add as many lights as possible
         x: maxX,
         y: maxY,
         z: maxZ
-    }
+    }, 
+	{
+		x: maxX,
+		y: -maxY,
+		z: maxZ
+	}
 ];
 
 var objects = [ // add objects here (needs atleas a color and points)
@@ -80,7 +85,8 @@ var objects = [ // add objects here (needs atleas a color and points)
 			green: 1,
 			blue: 0,
 			alpha: 1
-		}
+		}, 
+		normal: null
     },
 	{
         type: 'sphere',
@@ -95,7 +101,8 @@ var objects = [ // add objects here (needs atleas a color and points)
 			green: 1,
 			blue: 0,
 			alpha: 1
-		}
+		},
+		normal: null
     },
 	{
 		type: 'texture-plane', 
@@ -127,7 +134,8 @@ var objects = [ // add objects here (needs atleas a color and points)
 			blue: 0, 
 			alpha: 1
 		},
-		texture: 'grass'
+		texture: 'grass',
+		normal: null
 	}
 ];
 
@@ -231,7 +239,7 @@ function trace(ray, depth) {
         return backgroundColor;
     }
 
-    return getColor(firstObj.object);
+    return getColor(firstObj.object, ray);
 }
 
 // intersectScene
@@ -263,7 +271,11 @@ function detectCollision(ray) {
 }
 
 // surface
-function getColor(object) {
+function getColor(object, ray) {
+	for(var i = 0; i < lights.length; i++){
+		var lightPoint = lights[i];
+		// var contribution = dot()
+	}
     return object.color; // will require a lot more for lighting 
 }
 
@@ -271,44 +283,37 @@ function equation3D(point1, point2) {
 	return unitVec(point1.x - point2.x, point1.y - point2.y, point1.z - point2.z);
 }
 
+function distance3d(p1, p2) {
+	var diff = subtract(p1, p2);
+	return Math.sqrt(Math.pow(diff[0],2) + Math.pow(diff[1], 2) + Math.pow(diff[2], 2));
+}
+
 function planeIntersection(obj, ray) {
-	var planeEquation = determinePlane(obj);
-	// console.log(planeEquation);
-	var coefficients = planeEquationCrossProduct(planeEquation[0], planeEquation[1]);
-	// console.log(coefficients);
-	var dValue = planeDValue(coefficients, obj.corners.bottomLeft);
-	// console.log(dValue);
 	var rayVec3 = vec3(ray.vector.x, ray.vector.y, ray.vector.z);
-	var subt = vec3(obj.corners.topLeft.x - ray.start.x, 
-		obj.corners.topLeft.y - ray.start.y, 
-		obj.corners.topLeft.z - ray.start.z);
-	// console.log(subt);
-	var t = dot(vec3(coefficients.x, coefficients.y, coefficients.z), subt) / 
-		dot(vec3(coefficients.x, coefficients.y, coefficients.z), rayVec3);
-	return 0;
+	var rayStart = vec3(ray.start.x, ray.start.y, ray.start.z);
+	var corner1 = vec3(obj.corners.topLeft.x, obj.corners.topLeft.y, obj.corners.topLeft.z);
+	var corner2 = vec3(obj.corners.topRight.x, obj.corners.topRight.y, obj.corners.topRight.z);
+	var corner3 = vec3(obj.corners.bottomLeft.x, obj.corners.bottomLeft.y, obj.corners.bottomLeft.z);
+	var corner4 = vec3(obj.corners.bottomRight.x, obj.corners.bottomRight.y, obj.corners.bottomRight.z);
+	// if(!isNaN(eye_to_point)){
+		// alert(eye_to_point);
+	// }
+	var diff1 = subtract(corner1, corner3);
+	var diff2 = subtract(corner2, corner3);
+	var crossProd = cross(diff1, diff2);
+	var norm = normalize(crossProd, false);
+	var subt = subtract(norm, rayStart);
+	var time = dot(corner1, subt)/dot(corner1, rayVec3); // Getting negative number
+	// if(!isNaN(time)){
+		// alert(time);
+	// }
+	var p = add(rayStart, scale(time, rayVec3));
+	var eye_to_point = dot(subtract(rayStart, p), subtract(rayStart, p));
+	alert(eye_to_point);
+	// var v = dot(subtract(rayStart, p), rayVec3);
+	return eye_to_point;
 }
 
-function planeDValue(coefficients, corner) {
-	return coefficients.x * corner.x + coefficients.y * corner.y + coefficients.z * corner.x;
-}
-
-function planeEquationCrossProduct(vec1, vec2) {
-	return new Vector(vec1.y * vec2.z - vec2.y * vec1.z, 
-		vec1.x * vec2.z - vec2.x *vec1.z, 
-		vec1.x * vec2.y - vec2.y * vec1.z);
-}
-
-function determinePlane(obj) {
-	var vec1 = 
-		new Vector(obj.corners.topLeft.x - obj.corners.bottomRight.x,
-			obj.corners.topLeft.y - obj.corners.bottomRight.y,
-			obj.corners.topLeft.z - obj.corners.bottomRight.z);
-	var vec2 = 
-		new Vector(obj.corners.topRight.x - obj.corners.bottomRight.x,
-			obj.corners.topRight.y - obj.corners.bottomRight.y,
-			obj.corners.topRight.z - obj.corners.bottomRight.z);
-	return [vec1, vec2];
-}
 
 function sphereIntersection(obj, ray) {
 	var rayStartToSphhere = vec3(
