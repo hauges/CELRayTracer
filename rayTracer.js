@@ -96,7 +96,39 @@ var objects = [ // add objects here (needs atleas a color and points)
 			blue: 0,
 			alpha: 1
 		}
-    }
+    },
+	{
+		type: 'texture-plane', 
+		corners: {
+			topLeft : {
+				x: 512,
+				y: 0, 
+				z: 30
+			},
+			topRight : {
+				x: 512,
+				y: 256, 
+				z: 30
+			},
+			bottomLeft : {
+				x: 0,
+				y: 0, 
+				z: 0
+			},
+			bottomRight : {
+				x: 0,
+				y: 256, 
+				z: 0
+			},
+		},
+		color: {
+			red: 0, 
+			green: .9, 
+			blue: 0, 
+			alpha: 1
+		},
+		texture: 'grass'
+	}
 ];
 
 
@@ -161,7 +193,8 @@ window.onload = function init() {
 
 function createImage() {
 	var ray = {
-		start: camera.location
+		start: camera.location,
+		vector: new Vector(-100, -100, -100)
 	}
 
 	for(var i = 0; i < width; i++) {
@@ -216,7 +249,14 @@ function detectCollision(ray) {
 				firstObj.distance = distance;
 				firstObj.object = obj;
 			}
-        }
+		} 
+		 if (obj.type == 'texture-plane') {
+			 var distance = planeIntersection(obj, ray);
+			 if (distance < firstObj.distance) {
+				 firstObj.distance = distance;
+				 firstObj.object = obj;
+			 }
+		 }
     }
 
     return firstObj;
@@ -229,6 +269,45 @@ function getColor(object) {
 
 function equation3D(point1, point2) {
 	return unitVec(point1.x - point2.x, point1.y - point2.y, point1.z - point2.z);
+}
+
+function planeIntersection(obj, ray) {
+	var planeEquation = determinePlane(obj);
+	// console.log(planeEquation);
+	var coefficients = planeEquationCrossProduct(planeEquation[0], planeEquation[1]);
+	// console.log(coefficients);
+	var dValue = planeDValue(coefficients, obj.corners.bottomLeft);
+	// console.log(dValue);
+	var rayVec3 = vec3(ray.vector.x, ray.vector.y, ray.vector.z);
+	var subt = vec3(obj.corners.topLeft.x - ray.start.x, 
+		obj.corners.topLeft.y - ray.start.y, 
+		obj.corners.topLeft.z - ray.start.z);
+	// console.log(subt);
+	var t = dot(vec3(coefficients.x, coefficients.y, coefficients.z), subt) / 
+		dot(vec3(coefficients.x, coefficients.y, coefficients.z), rayVec3);
+	return 0;
+}
+
+function planeDValue(coefficients, corner) {
+	return coefficients.x * corner.x + coefficients.y * corner.y + coefficients.z * corner.x;
+}
+
+function planeEquationCrossProduct(vec1, vec2) {
+	return new Vector(vec1.y * vec2.z - vec2.y * vec1.z, 
+		vec1.x * vec2.z - vec2.x *vec1.z, 
+		vec1.x * vec2.y - vec2.y * vec1.z);
+}
+
+function determinePlane(obj) {
+	var vec1 = 
+		new Vector(obj.corners.topLeft.x - obj.corners.bottomRight.x,
+			obj.corners.topLeft.y - obj.corners.bottomRight.y,
+			obj.corners.topLeft.z - obj.corners.bottomRight.z);
+	var vec2 = 
+		new Vector(obj.corners.topRight.x - obj.corners.bottomRight.x,
+			obj.corners.topRight.y - obj.corners.bottomRight.y,
+			obj.corners.topRight.z - obj.corners.bottomRight.z);
+	return [vec1, vec2];
 }
 
 function sphereIntersection(obj, ray) {
