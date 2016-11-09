@@ -59,25 +59,25 @@ var camera = {
 };
 
 var lights = [ // can add as many lights as possible
-    {
-        x: maxX,
-        y: maxY,
-        z: maxZ
-    }, 
+    // {
+        // x: maxX,
+        // y: maxY,
+        // z: maxZ
+    // }, 
 	{
-		x: maxX,
-		y: -maxY,
-		z: maxZ
+		x: 512,
+		y: 512,
+		z: 0
 	}
-];
+]; 
 
 var objects = [ // add objects here (needs atleas a color and points)
     {
         type: 'sphere',
         center: {
-            x: 200,
+            x: 100,
             y: 200,
-            z: 200
+            z: 0
         },
         radius: 50,
 		color: {
@@ -86,12 +86,13 @@ var objects = [ // add objects here (needs atleas a color and points)
 			blue: 0,
 			alpha: 1
 		}, 
-		normal: null
+		normal: null,
+		lighting: true
     },
 	{
         type: 'sphere',
         center: {
-            x: 400,
+            x: 200,
             y: 400,
             z: 400
         },
@@ -102,41 +103,77 @@ var objects = [ // add objects here (needs atleas a color and points)
 			blue: 0,
 			alpha: 1
 		},
-		normal: null
+		normal: null,
+		lighting: true
     },
 	{
-		type: 'texture-plane', 
-		corners: {
-			topLeft : {
-				x: 512,
-				y: 0, 
-				z: 30
-			},
-			topRight : {
-				x: 512,
-				y: 256, 
-				z: 30
-			},
-			bottomLeft : {
-				x: 0,
-				y: 0, 
-				z: 0
-			},
-			bottomRight : {
-				x: 0,
-				y: 256, 
-				z: 0
-			},
-		},
+        type: 'sphere',
+        center: {
+            x: 100,
+            y: 400,
+            z: 200
+        },
+        radius: 50,
 		color: {
-			red: 0, 
-			green: .9, 
-			blue: 0, 
+			red: 1,
+			green: .5,
+			blue: 0,
 			alpha: 1
 		},
-		texture: 'grass',
-		normal: null
-	}
+		normal: null,
+		lighting: true
+    } //,
+	// { // White sphere
+        // type: 'sphere',
+        // center: {
+            // x: 512,
+            // y: 512,
+            // z: 0
+        // },
+        // radius: 25,
+		// color: {
+			// red: 1,
+			// green: 1,
+			// blue: 1,
+			// alpha: 1
+		// },
+		// normal: null,
+		// lighting: false
+    // },
+	// {
+		// type: 'texture-plane', 
+		// corners: {
+			// topLeft : {
+				// x: 512,
+				// y: 0, 
+				// z: 30
+			// },
+			// topRight : {
+				// x: 512,
+				// y: 256, 
+				// z: 30
+			// },
+			// bottomLeft : {
+				// x: 0,
+				// y: 0, 
+				// z: 0
+			// },
+			// bottomRight : {
+				// x: 0,
+				// y: 256, 
+				// z: 0
+			// },
+		// },
+		// color: {
+			// red: 0, 
+			// green: .9, 
+			// blue: 0, 
+			// alpha: 1
+		// },
+		// texture: 'grass',
+		// normal: null, 
+		// lighting: true
+	// }
 ];
 
 
@@ -160,19 +197,6 @@ window.onload = function init() {
 	aspect = canvas.width/canvas.height;
 	gl.clearColor(1, 1, 1, 1);
 	
-	// for(var i = -1; i < 1; i+= 2/canvas.width) {
-		// for(var j = 1; j > -1; j-= 2/canvas.height) {
-			// vertices.push(vec2(i, j));
-			// frameBuffer.push(vec4(Math.abs(i), Math.abs(j), Math.abs(i - j), 1));
-		// }
-	// }
-	
-	// vertices.push(vec2(0, 0));
-	// vertices.push(vec2(2/canvas.width, 2/canvas.height));
-	// frameBuffer.push(vec3(0, 1, 0));
-	// frameBuffer.push(vec3(1, 0, 0));
-	
-	// vertices.push(vec2(-1, 1));
 	
 	createImage();
 	
@@ -210,7 +234,7 @@ function createImage() {
 			var canvasPoint = new Vector(i, j, 0);
 			ray.vector = equation3D(camera.location, canvasPoint);
 
-			var color = trace(ray, 0);
+			var color = trace(ray, 0, i, j);
 			
 			vertices.push(vec2(i * 2 / width - 1, j * 2 / height - 1))
 			frameBuffer.push(vec4(color.red, color.green, color.blue, color.alpha));
@@ -232,14 +256,14 @@ function unitVec(x, y, z) {
     return new Vector(x / size, y / size, z / size);
 }
 
-function trace(ray, depth) {
+function trace(ray, depth, xDir, yDir) {
     var firstObj = detectCollision(ray);
 
     if(firstObj.distance == null) {
         return backgroundColor;
     }
 
-    return getColor(firstObj.object, ray);
+    return getColor(firstObj, ray, xDir, yDir);
 }
 
 // intersectScene
@@ -271,12 +295,31 @@ function detectCollision(ray) {
 }
 
 // surface
-function getColor(object, ray) {
+function getColor(currentObject, ray, xDir, yDir) {
+	var dist = currentObject.distance;
+	var point = {
+		x: ray.vector.x * dist + ray.start.x,
+		y: ray.vector.y * dist + ray.start.y, 
+		z: ray.vector.z * dist + ray.start.z
+	};
 	for(var i = 0; i < lights.length; i++){
 		var lightPoint = lights[i];
-		// var contribution = dot()
+		
+		if (!visibleLightSource(point, lightPoint)) {
+			currentObject.object.color.red -= currentObject.object.color.red/100;
+			currentObject.object.color.green -= currentObject.object.color.green/100;
+			currentObject.object.color.blue -= currentObject.object.color.blue/100;
+		}
 	}
-    return object.color; // will require a lot more for lighting 
+    return currentObject.object.color; // will require a lot more for lighting 
+}
+
+function visibleLightSource(point, currentLight) {
+	var obj = detectCollision({
+		start: point,
+		vector: new Vector(currentLight.x - point.x, currentLight.y - point.y, currentLight.z - point.z)
+	});
+	return obj.distance == null;
 }
 
 function equation3D(point1, point2) {
@@ -309,7 +352,7 @@ function planeIntersection(obj, ray) {
 	// }
 	var p = add(rayStart, scale(time, rayVec3));
 	var eye_to_point = dot(subtract(rayStart, p), subtract(rayStart, p));
-	alert(eye_to_point);
+	// alert(eye_to_point);
 	// var v = dot(subtract(rayStart, p), rayVec3);
 	return eye_to_point;
 }
