@@ -1,7 +1,7 @@
 
-var width = 512;
-var height = 512;
-var depth = 512;
+var width = 200;
+var height = 200;
+var depth = 200;
 var minX = 0;
 var maxX = width;
 var minY = 0;
@@ -20,6 +20,11 @@ var gl;
 var colorLoc;
 
 var frameBuffer = [];
+
+
+var countNeg = 0;
+var countPos = 0;
+
 
 var backgroundColor = {
 	red: 0,
@@ -65,9 +70,9 @@ var lights = [ // can add as many lights as possible
         // z: maxZ
     // }, 
 	{
-		x: 512,
-		y: 512,
-		z: 0
+		x: width / 2,
+        y: height / 2,
+        z: -depth / 2
 	}
 ]; 
 
@@ -122,58 +127,24 @@ var objects = [ // add objects here (needs atleas a color and points)
 		},
 		normal: null,
 		lighting: true
-    } //,
-	// { // White sphere
-        // type: 'sphere',
-        // center: {
-            // x: 512,
-            // y: 512,
-            // z: 0
-        // },
-        // radius: 25,
-		// color: {
-			// red: 1,
-			// green: 1,
-			// blue: 1,
-			// alpha: 1
-		// },
-		// normal: null,
-		// lighting: false
-    // },
-	// {
-		// type: 'texture-plane', 
-		// corners: {
-			// topLeft : {
-				// x: 512,
-				// y: 0, 
-				// z: 30
-			// },
-			// topRight : {
-				// x: 512,
-				// y: 256, 
-				// z: 30
-			// },
-			// bottomLeft : {
-				// x: 0,
-				// y: 0, 
-				// z: 0
-			// },
-			// bottomRight : {
-				// x: 0,
-				// y: 256, 
-				// z: 0
-			// },
-		// },
-		// color: {
-			// red: 0, 
-			// green: .9, 
-			// blue: 0, 
-			// alpha: 1
-		// },
-		// texture: 'grass',
-		// normal: null, 
-		// lighting: true
-	// }
+    },
+	/*{
+        type: 'sphere',
+        center: {
+            x: 0,
+			y: 512,
+			z: 0
+        },
+        radius: 50,
+		color: {
+			red: 0,
+			green: 0,
+			blue: 0,
+			alpha: 1
+		},
+		normal: null,
+		lighting: true
+    }*/
 ];
 
 
@@ -220,6 +191,7 @@ window.onload = function init() {
 	var vPosition = gl.getAttribLocation( program, "vPosition" );
 	gl.vertexAttribPointer( vPosition, 2, gl.FLOAT, false, 0, 0 );
 	gl.enableVertexAttribArray( vPosition );
+	console.log(countNeg, countPos);
 	render();
 }
 
@@ -263,14 +235,40 @@ function trace(ray, depth, xDir, yDir) {
         return backgroundColor;
     }
 
-    return getColor(firstObj, ray, xDir, yDir);
+	var normal = getNormal(firstObj, ray);
+
+    return getColor(firstObj, ray, normal);
 }
 
-// intersectScene
+function getNormal(obj, ray) {
+	var normal;
+	if(obj.object.type = 'sphere') {
+		normal = getSphereNormal(obj, ray);
+	}
+	return normal;
+}
+
+function getSphereNormal(obj, ray) {
+	var dist = obj.distance;
+	var point = {
+		x: ray.vector.x * dist + ray.start.x,
+		y: ray.vector.y * dist + ray.start.y,
+		z: ray.vector.z * dist + ray.start.z,
+	};
+	var center = obj.object.center;
+	var normal = unitVec(
+		point.x - center.x,
+		point.y - center.y,
+		point.z - center.z
+	);
+	return normal;
+}
+
+// intersectScene()
 function detectCollision(ray) {
     var firstObj = {
         distance: null,
-        object: null
+        object: null, 
     }
     for(var i = 0; i < objects.length; i++) {
         // check to see if there is an intersection and if its closer than firstObj
@@ -295,7 +293,7 @@ function detectCollision(ray) {
 }
 
 // surface
-function getColor(currentObject, ray, xDir, yDir) {
+function getColor(currentObject, ray, normal) {
 	var dist = currentObject.distance;
 	var point = {
 		x: ray.vector.x * dist + ray.start.x,
@@ -304,12 +302,25 @@ function getColor(currentObject, ray, xDir, yDir) {
 	};
 	for(var i = 0; i < lights.length; i++){
 		var lightPoint = lights[i];
-		
-		if (!visibleLightSource(point, lightPoint)) {
-			currentObject.object.color.red -= currentObject.object.color.red/100;
-			currentObject.object.color.green -= currentObject.object.color.green/100;
-			currentObject.object.color.blue -= currentObject.object.color.blue/100;
+		var p2lNormal = unitVec(
+			lightPoint.x - point.x,
+			lightPoint.y - point.y,
+			lightPoint.z - point.z
+		);
+
+		var ray0 = vec3(p2lNormal.x, p2lNormal.y, p2lNormal.z);
+		var ray1 = vec3(normal.x, normal.y, normal.z);
+
+		var scaleFactor = Math.max(dot(ray0, ray1), 0.0);
+		if(dot(ray0, ray1) < 0) {
+			countNeg++;
+		} else {
+			countPos++;
 		}
+		
+		currentObject.object.color.red = currentObject.object.color.red * scaleFactor;
+		currentObject.object.color.green = currentObject.object.color.green * scaleFactor;
+		currentObject.object.color.blue = currentObject.object.color.blue * scaleFactor;
 	}
     return currentObject.object.color; // will require a lot more for lighting 
 }
