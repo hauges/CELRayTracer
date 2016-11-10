@@ -1,7 +1,7 @@
 
-var width = 200;
-var height = 200;
-var depth = 200;
+var width = 512;
+var height = 512;
+var depth = 512;
 var minX = 0;
 var maxX = width;
 var minY = 0;
@@ -70,9 +70,9 @@ var lights = [ // can add as many lights as possible
         // z: maxZ
     // }, 
 	{
-		x: width / 2,
-        y: height / 2,
-        z: -depth / 2
+		x: 0,
+		y: 0, 
+		z: 0
 	}
 ]; 
 
@@ -101,7 +101,7 @@ var objects = [ // add objects here (needs atleas a color and points)
             y: 400,
             z: 400
         },
-        radius: 50,
+        radius: 25,
 		color: {
 			red: 1,
 			green: 1,
@@ -235,6 +235,7 @@ function trace(ray, depth, xDir, yDir) {
         return backgroundColor;
     }
 
+	 // Gets direction
 	var normal = getNormal(firstObj, ray);
 
     return getColor(firstObj, ray, normal);
@@ -255,6 +256,9 @@ function getSphereNormal(obj, ray) {
 		y: ray.vector.y * dist + ray.start.y,
 		z: ray.vector.z * dist + ray.start.z,
 	};
+	if(obj.object.radius == 25) {
+		// console.log(point, Math.sqrt(Math.pow(point.x - obj.object.center.x,2) + Math.pow(point.y - obj.object.center.y,2) + Math.pow(point.z - obj.object.center.z,2)) == obj.object.radius);
+	}
 	var center = obj.object.center;
 	var normal = unitVec(
 		point.x - center.x,
@@ -302,25 +306,48 @@ function getColor(currentObject, ray, normal) {
 	};
 	for(var i = 0; i < lights.length; i++){
 		var lightPoint = lights[i];
-		var p2lNormal = unitVec(
+		var p2lNormal = new Vector(
 			lightPoint.x - point.x,
 			lightPoint.y - point.y,
 			lightPoint.z - point.z
 		);
 
 		var ray0 = vec3(p2lNormal.x, p2lNormal.y, p2lNormal.z);
+		var len = normalize(ray0, 0);
+		var distBetween = length(subtract(vec3(lightPoint.x, lightPoint.y, lightPoint.z), vec3(point.x, point.y, point.z)));
 		var ray1 = vec3(normal.x, normal.y, normal.z);
 
+		var shadowRay = {
+			start: {
+				x: point.x,
+				y: point.y,
+				z: point.z
+			},
+			vector: p2lNormal
+		};
+		var temp = add(vec3(shadowRay.start.x, shadowRay.start.y, shadowRay.start.z), scale(.00001, len));
+		shadowRay.start.x = temp[0];
+		shadowRay.start.y = temp[1];
+		shadowRay.start.z = temp[2];
+		var objectReturn = detectCollision(shadowRay);
+		if (objectReturn.distance == null || objectReturn.object == currentObject.object) { // Doesn't hit anything
+			currentObject.object.color.red = currentObject.object.color.red;
+			currentObject.object.color.green = currentObject.object.color.green;
+			currentObject.object.color.blue = currentObject.object.color.blue;
+		} else {
+			currentObject.object.color.red = currentObject.object.color.red *.95;
+			currentObject.object.color.green = currentObject.object.color.green * .95;
+			currentObject.object.color.blue = currentObject.object.color.blue * .95;
+		}
 		var scaleFactor = Math.max(dot(ray0, ray1), 0.0);
 		if(dot(ray0, ray1) < 0) {
 			countNeg++;
 		} else {
 			countPos++;
 		}
+		scaleFactor = 1;
 		
-		currentObject.object.color.red = currentObject.object.color.red * scaleFactor;
-		currentObject.object.color.green = currentObject.object.color.green * scaleFactor;
-		currentObject.object.color.blue = currentObject.object.color.blue * scaleFactor;
+		
 	}
     return currentObject.object.color; // will require a lot more for lighting 
 }
@@ -370,6 +397,7 @@ function planeIntersection(obj, ray) {
 
 
 function sphereIntersection(obj, ray) {
+	// console.log(ray.start);
 	var rayStartToSphhere = vec3(
 		obj.center.x - ray.start.x,
 		obj.center.y - ray.start.y,
