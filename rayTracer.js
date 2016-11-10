@@ -77,30 +77,30 @@ var lights = [ // can add as many lights as possible
 ]; 
 
 var objects = [ // add objects here (needs atleas a color and points)
-    {
-        type: 'sphere',
-        center: {
-            x: 100,
-            y: 200,
-            z: 0
-        },
-        radius: 50,
-		color: {
-			red: 0,
-			green: 1,
-			blue: 0,
-			alpha: 1
-		}, 
-		normal: null,
-		lighting: true
-    },
+    // {
+        // type: 'sphere',
+        // center: {
+            // x: 100,
+            // y: 200,
+            // z: 0
+        // },
+        // radius: 50,
+		// color: {
+			// red: 0,
+			// green: 1,
+			// blue: 0,
+			// alpha: 1
+		// }, 
+		// normal: null,
+		// lighting: true
+    // },
 	{
         type: 'sphere',
         center: {
-            x: 200,
-            y: 400,
-            z: 400
-        },
+            x: 0,
+            y: 500,
+            z: 200
+			},
         radius: 25,
 		color: {
 			red: 1,
@@ -231,8 +231,14 @@ function unitVec(x, y, z) {
 function trace(ray, depth, xDir, yDir) {
     var firstObj = detectCollision(ray);
 
-    if(firstObj.distance == null) {
-        return backgroundColor;
+	if(firstObj.distance == null) {
+		var color = {
+			red: backgroundColor.red,
+			blue: backgroundColor.blue - (yDir % 50)/100,
+			green: backgroundColor.green - (xDir % 512) /1024,
+			alpha: backgroundColor.alpha
+		};
+		return color;
     }
 
 	 // Gets direction
@@ -290,6 +296,9 @@ function detectCollision(ray) {
 				 firstObj.distance = distance;
 				 firstObj.object = obj;
 			 }
+		 } 
+		 if (obj.type == 'triangle' ) {
+			 // TODO
 		 }
     }
 
@@ -325,7 +334,7 @@ function getColor(currentObject, ray, normal) {
 			},
 			vector: p2lNormal
 		};
-		var temp = add(vec3(shadowRay.start.x, shadowRay.start.y, shadowRay.start.z), scale(.00001, len));
+		var temp = add(vec3(shadowRay.start.x, shadowRay.start.y, shadowRay.start.z), scale(.000001, len));
 		shadowRay.start.x = temp[0];
 		shadowRay.start.y = temp[1];
 		shadowRay.start.z = temp[2];
@@ -335,9 +344,9 @@ function getColor(currentObject, ray, normal) {
 			currentObject.object.color.green = currentObject.object.color.green;
 			currentObject.object.color.blue = currentObject.object.color.blue;
 		} else {
-			currentObject.object.color.red = currentObject.object.color.red *.95;
-			currentObject.object.color.green = currentObject.object.color.green * .95;
-			currentObject.object.color.blue = currentObject.object.color.blue * .95;
+			objectReturn.object.color.red = objectReturn.object.color.red *.95;
+			objectReturn.object.color.green = objectReturn.object.color.green * .95;
+			objectReturn.object.color.blue = objectReturn.object.color.blue * .95;
 		}
 		var scaleFactor = Math.max(dot(ray0, ray1), 0.0);
 		if(dot(ray0, ray1) < 0) {
@@ -346,6 +355,10 @@ function getColor(currentObject, ray, normal) {
 			countPos++;
 		}
 		scaleFactor = 1;
+		currentObject.object.color.red = currentObject.object.color.red * scaleFactor;
+		currentObject.object.color.green = currentObject.object.color.green * scaleFactor;
+		currentObject.object.color.blue = currentObject.object.color.blue * scaleFactor;
+		
 		
 		
 	}
