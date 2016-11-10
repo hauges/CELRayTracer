@@ -128,12 +128,12 @@ var objects = [ // add objects here (needs atleas a color and points)
 		normal: null,
 		lighting: true
     },
-	/*{
+	{
         type: 'sphere',
         center: {
-            x: 0,
-			y: 512,
-			z: 0
+            x: 512,
+				y: 512,
+				z: 0
         },
         radius: 50,
 		color: {
@@ -144,7 +144,22 @@ var objects = [ // add objects here (needs atleas a color and points)
 		},
 		normal: null,
 		lighting: true
-    }*/
+    },
+	 {
+		type: 'triangle',
+		points: [
+			vec3(400, 100, 30),
+			vec3(500, 300, 30),
+			vec3(500, 250, 30)],
+		color: {
+			red: .5, 
+			green: .5, 
+			blue: .5, 
+			alpha: 1
+		}, 
+		lighting: true,
+		normal : null
+	 }
 ];
 
 
@@ -242,6 +257,7 @@ function trace(ray, depth, xDir, yDir) {
     }
 
 	 // Gets direction
+	 // console.log(firstObj.object);
 	var normal = getNormal(firstObj, ray);
 
     return getColor(firstObj, ray, normal);
@@ -249,8 +265,13 @@ function trace(ray, depth, xDir, yDir) {
 
 function getNormal(obj, ray) {
 	var normal;
-	if(obj.object.type = 'sphere') {
+	if(obj.object.type == 'sphere') {
 		normal = getSphereNormal(obj, ray);
+	}
+	if (obj.object.type == 'triangle') {
+		//console.log(obj.object);
+		var temp = triangleNormal(obj.object);
+		normal = new Vector( temp[0], temp[1], temp[2]);
 	}
 	return normal;
 }
@@ -298,11 +319,41 @@ function detectCollision(ray) {
 			 }
 		 } 
 		 if (obj.type == 'triangle' ) {
-			 // TODO
+			var distance = triangleIntersection(obj, ray);
+			// alert(distance + " " +  firstObj.distance );
+			if (distance < firstObj.distance) {
+					firstObj.distance = distance;
+					firstObj.object = obj;
+			}
 		 }
     }
 
     return firstObj;
+}
+
+function triangleNormal(obj) {
+	var vector1 = subtract(obj.points[0], obj.points[1]);
+	var vector2 = subtract(obj.points[2], obj.points[1]);
+	// Normal
+	var vCross = cross(vector1, vector2);
+	var vCrossNorm = normalize(vCross, false);
+	return vCrossNorm;
+}
+
+//http://math.stackexchange.com/questions/305642/how-to-find-surface-normal-of-a-triangle
+function triangleIntersection(obj, ray) {
+	var rayStart = vec3(ray.start.x,ray.start.y, ray.start.z);
+	var rayV = vec3(ray.vector.x, ray.vector.y, ray.vector.z);
+	var vCrossNorm = triangleNormal(obj);
+	obj.normal = vCrossNorm;
+	var denom = dot(rayV, vCrossNorm);
+	if (denom == 0) {
+		return ;
+	}
+	var time = (dot(subtract(rayStart, obj.points[1]), vCrossNorm))/denom;
+	var point = add(rayStart, scale(time, rayV));
+	var diff = subtract(point, rayStart);
+	return Math.sqrt(dot(diff, diff));
 }
 
 // surface
@@ -355,6 +406,7 @@ function getColor(currentObject, ray, normal) {
 			countPos++;
 		}
 		scaleFactor = 1;
+		// phong shading
 		currentObject.object.color.red = currentObject.object.color.red * scaleFactor;
 		currentObject.object.color.green = currentObject.object.color.green * scaleFactor;
 		currentObject.object.color.blue = currentObject.object.color.blue * scaleFactor;
