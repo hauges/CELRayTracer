@@ -95,13 +95,13 @@ var objects = [ // add objects here (needs atleas a color and points)
 		// lighting: true
     // },
 	{
-        type: 'sphere',
-        center: {
-            x: 0,
-            y: 500,
-            z: 200
+		type: 'sphere',
+		center: {
+			x: 0,
+			y: 500,
+			z: 200
 			},
-        radius: 25,
+		radius: 25,
 		color: {
 			red: 1,
 			green: 1,
@@ -110,15 +110,15 @@ var objects = [ // add objects here (needs atleas a color and points)
 		},
 		normal: null,
 		lighting: true
-    },
+	},
 	{
-        type: 'sphere',
-        center: {
-            x: 100,
-            y: 400,
-            z: 200
-        },
-        radius: 50,
+		type: 'sphere',
+		center: {
+			x: 100,
+			y: 400,
+			z: 200
+		},
+		radius: 50,
 		color: {
 			red: 1,
 			green: .5,
@@ -127,15 +127,15 @@ var objects = [ // add objects here (needs atleas a color and points)
 		},
 		normal: null,
 		lighting: true
-    },
+	},
 	{
-        type: 'sphere',
-        center: {
-            x: 512,
+		type: 'sphere',
+		center: {
+			x: 512,
 				y: 512,
 				z: 0
-        },
-        radius: 50,
+		},
+		radius: 50,
 		color: {
 			red: 0,
 			green: 0,
@@ -148,9 +148,9 @@ var objects = [ // add objects here (needs atleas a color and points)
 	 {
 		type: 'triangle',
 		points: [
-			vec3(400, 100, 30),
-			vec3(500, 300, 30),
-			vec3(500, 250, 30)],
+			vec3(300, 100, 30),
+			vec3(400, 300, 30),
+			vec3(400, 250, 30)],
 		color: {
 			red: .5, 
 			green: .5, 
@@ -244,8 +244,7 @@ function unitVec(x, y, z) {
 }
 
 function trace(ray, depth, xDir, yDir) {
-    var firstObj = detectCollision(ray);
-
+	var firstObj = detectCollision(ray);
 	if(firstObj.distance == null) {
 		var color = {
 			red: backgroundColor.red,
@@ -254,7 +253,7 @@ function trace(ray, depth, xDir, yDir) {
 			alpha: backgroundColor.alpha
 		};
 		return color;
-    }
+	}
 
 	 // Gets direction
 	 // console.log(firstObj.object);
@@ -284,7 +283,10 @@ function getSphereNormal(obj, ray) {
 		z: ray.vector.z * dist + ray.start.z,
 	};
 	if(obj.object.radius == 25) {
-		// console.log(point, Math.sqrt(Math.pow(point.x - obj.object.center.x,2) + Math.pow(point.y - obj.object.center.y,2) + Math.pow(point.z - obj.object.center.z,2)) == obj.object.radius);
+		// console.log(point, 
+			// Math.sqrt(Math.pow(point.x - obj.object.center.x,2) + 
+			// Math.pow(point.y - obj.object.center.y,2) + 
+			// Math.pow(point.z - obj.object.center.z,2)) == obj.object.radius);
 	}
 	var center = obj.object.center;
 	var normal = unitVec(
@@ -297,15 +299,16 @@ function getSphereNormal(obj, ray) {
 
 // intersectScene()
 function detectCollision(ray) {
-    var firstObj = {
-        distance: null,
-        object: null, 
-    }
-    for(var i = 0; i < objects.length; i++) {
-        // check to see if there is an intersection and if its closer than firstObj
+	var firstObj = {
+		distance: null,
+		object: null, 
+	};
+	for(var i = 0; i < objects.length; i++) {
+		// check to see if there is an intersection and if its closer than firstObj
+		
 		var obj = objects[i];
-        if(obj.type == 'sphere') {
-            var distance = sphereIntersection(obj, ray);
+		if(obj.type == 'sphere') {
+			var distance = sphereIntersection(obj, ray);
 			if(distance < firstObj.distance) {
 				firstObj.distance = distance;
 				firstObj.object = obj;
@@ -320,7 +323,6 @@ function detectCollision(ray) {
 		 } 
 		 if (obj.type == 'triangle' ) {
 			var distance = triangleIntersection(obj, ray);
-			// alert(distance + " " +  firstObj.distance );
 			if (distance < firstObj.distance) {
 					firstObj.distance = distance;
 					firstObj.object = obj;
@@ -358,6 +360,7 @@ function triangleIntersection(obj, ray) {
 
 // surface
 function getColor(currentObject, ray, normal) {
+	// console.log(currentObject, currentObject.object.type);
 	var dist = currentObject.distance;
 	var point = {
 		x: ray.vector.x * dist + ray.start.x,
