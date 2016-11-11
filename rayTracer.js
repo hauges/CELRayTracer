@@ -43,13 +43,13 @@ var camera = {
     location: {
         x: width / 2,
         y: height / 2,
-        z: -depth / 2
+        z: -depth/2
     },
     peripheral: 45,
     vector: {
         x: 0,
         y: 0,
-        z: 1
+        z: -1
     },
     right: {
         x: 1,
@@ -64,11 +64,11 @@ var camera = {
 };
 
 var lights = [ // can add as many lights as possible
-    {
-        x: 512,
-        y: 512,
-        z: 0
-    }, 
+    // {
+    //     x: 512,
+    //     y: 512,
+    //     z: 0
+    // }, 
 	{
 		x: 0,
 		y: 0, 
@@ -97,7 +97,7 @@ var objects = [ // add objects here (needs atleas a color and points)
 	{
 		type: 'sphere',
 		center: {
-			x: 0,
+			x: -100,
 			y: 400,
 			z: 300
 			},
@@ -114,7 +114,7 @@ var objects = [ // add objects here (needs atleas a color and points)
 	{
 		type: 'sphere',
 		center: {
-			x: 100,
+			x: 500,
 			y: 400,
 			z: 200
 		},
@@ -131,13 +131,13 @@ var objects = [ // add objects here (needs atleas a color and points)
 	{
 		type: 'sphere',
 		center: {
-			x: 512,
-				y: 512,
-				z: 0
+			x: 300,
+			y: 512,
+			z: 100
 		},
 		radius: 50,
 		color: {
-			red: 0,
+			red: 1,
 			green: 0,
 			blue: 0,
 			alpha: 1
@@ -150,7 +150,7 @@ var objects = [ // add objects here (needs atleas a color and points)
 		type: 'triangle',
 		points: [
 			vec3(300, 100, 0),
-			vec3(400, 300, 0),
+			vec3(400, 200, 0),
 			vec3(400, 250, 0)],
 		color: {
 			red: .5, 
@@ -221,6 +221,7 @@ function createImage() {
 		for(var j = 0; j < height; j++) {
 			var canvasPoint = new Vector(i, j, 0);
 			ray.vector = equation3D(camera.location, canvasPoint);
+			// alert(ray.vector.x + " " +  ray.vector.y +" " + ray.vector.z);
 
 			var color = trace(ray, 0, i, j);
 			
@@ -334,7 +335,7 @@ function triangleNormal(obj) {
 	// Normal
 	var vCross = cross(vector1, vector2);
 	var vCrossNorm = normalize(vCross, false);
-	return vCrossNorm;
+	return vCross;
 }
 
 //http://math.stackexchange.com/questions/305642/how-to-find-surface-normal-of-a-triangle
@@ -349,6 +350,7 @@ function triangleIntersection(obj, ray) {
 	}
 	var time = (dot(subtract(rayStart, obj.points[1]), vCrossNorm))/denom;
 	var point = add(rayStart, scale(time, rayV));
+	point[2] += 512;
 	
 	var xMin = Math.min(obj.points[0][0], obj.points[1][0], obj.points[2][0]) - .1;
 	var xMax = Math.max(obj.points[0][0], obj.points[1][0], obj.points[2][0]) + .1;
@@ -356,9 +358,9 @@ function triangleIntersection(obj, ray) {
 	var yMax = Math.max(obj.points[0][1], obj.points[1][1], obj.points[2][1]) + .1;
 	var zMin = Math.min(obj.points[0][2], obj.points[1][2], obj.points[2][2]) - .1;
 	var zMax = Math.max(obj.points[0][2], obj.points[1][2], obj.points[2][2]) + .1;
-	console.log(xMin, xMax, yMin, yMax, zMin, zMax);
-	console.log(point);
-	if(point[0] >= xMin && point[0] <= xMax && point[1] >= yMin && point[1] <= yMax && Math.floor(point[2]) >= zMin && Math.floor(point[2]) <= zMax) { 
+	// console.log(xMin, xMax, yMin, yMax, zMin, zMax);
+	// console.log(point);
+	if(Math.floor(point[0]) >= xMin && Math.floor(point[0]) <= xMax && Math.floor(point[1]) >= yMin && Math.floor(point[1]) <= yMax && Math.floor(point[2]) >= zMin && Math.floor(point[2]) <= zMax) { 
 		var diff = subtract(point, rayStart);
 		return Math.sqrt(dot(diff, diff));
 	}
@@ -385,7 +387,8 @@ function getColor(currentObject, ray, normal) {
 		);
 
 		var ray0 = vec3(p2lNormal.x, p2lNormal.y, p2lNormal.z);
-		var len = normalize(ray0, 0);
+		ray0 = negate(ray0);
+		var len = scale(1/(length(ray0)), ray0);
 		var distBetween = length(subtract(vec3(lightPoint.x, lightPoint.y, lightPoint.z), vec3(point.x, point.y, point.z)));
 		var ray1 = vec3(normal.x, normal.y, normal.z);
 
@@ -417,7 +420,7 @@ function getColor(currentObject, ray, normal) {
 		} else {
 			countPos++;
 		}
-		scaleFactor = 1;
+		//scaleFactor = 1;
 		// phong shading
 		currentObject.object.color.red = currentObject.object.color.red * scaleFactor;
 		currentObject.object.color.green = currentObject.object.color.green * scaleFactor;
