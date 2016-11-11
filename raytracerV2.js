@@ -232,6 +232,12 @@ function detectCollision(ray) {
 
 // surface
 function getColor(object, ray) {
+    if(object.object.type == 'sphere') {
+        return getColorSphere(object, ray);
+    }
+}
+
+function getColorSphere(object, ray) {
     var color = object.object.color; // will require a lot more for lighting 
     var point = {
         x: ray.start.x + ray.vector.x * object.distance,
