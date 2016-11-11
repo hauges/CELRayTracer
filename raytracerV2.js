@@ -60,7 +60,7 @@ var camera = {
 var lights = [ // can add as many lights as possible
     {
         x: 400,
-        y: 400,
+        y: 200,
         z: 200
     }
 ];
@@ -74,6 +74,21 @@ var objects = [ // add objects here (needs atleas a color and points)
             z: 200
         },
         radius: 50,
+		color: {
+			red: 0.0,
+			green: 1.0,
+			blue: 0.0,
+			alpha: 1.0
+		}
+    },
+    {
+        type: 'sphere',
+        center: {
+            x: 50,
+            y: 200,
+            z: 200
+        },
+        radius: 75,
 		color: {
 			red: 0.0,
 			green: 1.0,
@@ -200,7 +215,7 @@ function trace(ray, depth) {
     return getColor(firstObj, ray);
 }
 
-function getNormal(vector) {
+function normalOf(vector) {
     //console.log(vector.x);
     return normalize(vec3(
         vector.x, 
@@ -248,20 +263,35 @@ function getColorSphere(object, ray) {
     //console.log(ray.vector.x, ray.vector.y, ray.vector.z);
     //console.log(point.x, point.y, point.z);
 
-    var pointNormal = getNormal( equation3D(object.object.center, point) );
+    var pointNormal = normalOf( equation3D(object.object.center, point) );
     var pointToLightNormal;
     var scaleFactor = 0.0;
+    var castedShadow = false;
 
     for(var i = 0; i < lights.length; i++) {
-        pointToLightNormal = getNormal( equation3D(point, lights[i]) );
+        pointToLightNormal = normalOf( equation3D(point, lights[i]) );
         scaleFactor = scaleFactor + dot(pointToLightNormal,pointNormal);
+        var toLightRay = {
+            start: point,
+            vector: pointToLightNormal
+        };
+        var ray0 = vec3(pointToLightNormal.x, pointToLightNormal.y, pointToLightNormal.z);
+        var len = normalize(ray0, 0);
+        
+        if(detectCollision(toLightRay).object != null) {
+            console.log('shadow');
+            castedShadow = true;
+        }
     }
 
     //console.log(pointNormal);
     //console.log(pointToLightNormal);
 
     //console.log(scaleFactor);
-    scaleFactor = Math.max(scaleFactor, 0.25);
+    scaleFactor = Math.max(scaleFactor, 0.50);
+    if(castedShadow) {
+        scaleFactor = scaleFactor / 4.0;
+    }
     //console.log(scaleFactor);
 
     var newColor = {
@@ -282,23 +312,6 @@ function equation3D(point1, point2) {
 }
 
 function sphereIntersection(obj, ray) {
-	/*var rayStartToSphhere = vec3(
-		obj.center.x - ray.start.x,
-		obj.center.y - ray.start.y,
-		obj.center.z - ray.start.z
-	);
-	var rayVec3 = vec3(
-		ray.vector.x,
-		ray.vector.y,
-		ray.vector.z
-	);
-	var vectorLength = dot(rayStartToSphhere, rayVec3);
-	var rayStartToSphhereLength = dot(rayStartToSphhere, rayStartToSphhere);
-	var d = Math.pow(obj.radius, 2) - rayStartToSphhereLength + Math.pow(vectorLength, 2);
-	if(d >= 0) {
-		return vectorLength - Math.sqrt(d);
-	}*/
-
     var cx = obj.center.x;
     var cy = obj.center.y;
     var cz = obj.center.z;
@@ -319,7 +332,7 @@ function sphereIntersection(obj, ray) {
     var b = 2*dx*(x0 - cx) + 2*dy*(y0 - cy) + 2*dz*(z0 - cz);
     var c = cx*cx + cy*cy + cz*cz + x0*x0 + y0*y0 + z0*z0 - 2*(cx*x0 + cy*y0 + cz*z0) - R*R;
 
-    if((b*b - 4*a*c) >= 0) {
+    if((b*b - 4*a*c) > 0) {
         var t = (-b - Math.sqrt(b*b - 4*a*c)) / (2*a);
         return maxRayLength * t;
     }
