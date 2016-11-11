@@ -373,7 +373,9 @@ function getColorSphere(object, ray) {
             vec3(toLightRay.start.x, toLightRay.start.y, toLightRay.start.z),
             scale(.00001, len)
         );
-
+			if(castedShadow != 1 && Math.max(dot(pointToLightNormal,pointNormal), 0) != 0){
+				castedShadow = castedShadow / .65;
+			}
         toLightRay.start.x = temp[0];
         toLightRay.start.y = temp[2];
         toLightRay.start.z = temp[2];
@@ -383,7 +385,7 @@ function getColorSphere(object, ray) {
 			  // Does not hit anything
         } else if(objectReturn.object != null) {
             // console.log('shadow');
-            castedShadow = 0.4;
+            castedShadow = castedShadow * .65;
             // getColor(objectReturn, toLightRay);
         }
     }
@@ -392,7 +394,7 @@ function getColorSphere(object, ray) {
     //console.log(pointToLightNormal);
 
     //console.log(scaleFactor);
-    scaleFactor = Math.max(scaleFactor, 0.50) * castedShadow;
+    scaleFactor = Math.max(scaleFactor, 0.50) * Math.min(castedShadow,1);
     //console.log(scaleFactor);
 
     var newColor = {
