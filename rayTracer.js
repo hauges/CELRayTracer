@@ -64,11 +64,11 @@ var camera = {
 };
 
 var lights = [ // can add as many lights as possible
-    // {
-        // x: maxX,
-        // y: maxY,
-        // z: maxZ
-    // }, 
+    {
+        x: 512,
+        y: 512,
+        z: 0
+    }, 
 	{
 		x: 0,
 		y: 0, 
@@ -98,8 +98,8 @@ var objects = [ // add objects here (needs atleas a color and points)
 		type: 'sphere',
 		center: {
 			x: 0,
-			y: 500,
-			z: 200
+			y: 400,
+			z: 300
 			},
 		radius: 25,
 		color: {
@@ -144,13 +144,14 @@ var objects = [ // add objects here (needs atleas a color and points)
 		},
 		normal: null,
 		lighting: true
-    },
+    }
+	,
 	 {
 		type: 'triangle',
 		points: [
-			vec3(300, 100, 30),
-			vec3(400, 300, 30),
-			vec3(400, 250, 30)],
+			vec3(300, 100, 0),
+			vec3(400, 300, 0),
+			vec3(400, 250, 0)],
 		color: {
 			red: .5, 
 			green: .5, 
@@ -245,7 +246,8 @@ function unitVec(x, y, z) {
 
 function trace(ray, depth, xDir, yDir) {
 	var firstObj = detectCollision(ray);
-	if(firstObj.distance == null) {
+	// console.log(firstObj);
+	if(firstObj.distance === Infinity) {
 		var color = {
 			red: backgroundColor.red,
 			blue: backgroundColor.blue - (yDir % 50)/100,
@@ -282,12 +284,6 @@ function getSphereNormal(obj, ray) {
 		y: ray.vector.y * dist + ray.start.y,
 		z: ray.vector.z * dist + ray.start.z,
 	};
-	if(obj.object.radius == 25) {
-		// console.log(point, 
-			// Math.sqrt(Math.pow(point.x - obj.object.center.x,2) + 
-			// Math.pow(point.y - obj.object.center.y,2) + 
-			// Math.pow(point.z - obj.object.center.z,2)) == obj.object.radius);
-	}
 	var center = obj.object.center;
 	var normal = unitVec(
 		point.x - center.x,
@@ -300,7 +296,7 @@ function getSphereNormal(obj, ray) {
 // intersectScene()
 function detectCollision(ray) {
 	var firstObj = {
-		distance: null,
+		distance: Infinity,
 		object: null, 
 	};
 	for(var i = 0; i < objects.length; i++) {
@@ -323,14 +319,13 @@ function detectCollision(ray) {
 		 } 
 		 if (obj.type == 'triangle' ) {
 			var distance = triangleIntersection(obj, ray);
-			if (distance < firstObj.distance) {
+			if ( distance !== undefined &&  distance < firstObj.distance) {
 					firstObj.distance = distance;
 					firstObj.object = obj;
 			}
 		 }
-    }
-
-    return firstObj;
+	}
+	return firstObj;
 }
 
 function triangleNormal(obj) {
@@ -354,8 +349,22 @@ function triangleIntersection(obj, ray) {
 	}
 	var time = (dot(subtract(rayStart, obj.points[1]), vCrossNorm))/denom;
 	var point = add(rayStart, scale(time, rayV));
-	var diff = subtract(point, rayStart);
-	return Math.sqrt(dot(diff, diff));
+	
+	var xMin = Math.min(obj.points[0][0], obj.points[1][0], obj.points[2][0]) - .1;
+	var xMax = Math.max(obj.points[0][0], obj.points[1][0], obj.points[2][0]) + .1;
+	var yMin = Math.min(obj.points[0][1], obj.points[1][1], obj.points[2][1]) - .1;
+	var yMax = Math.max(obj.points[0][1], obj.points[1][1], obj.points[2][1]) + .1;
+	var zMin = Math.min(obj.points[0][2], obj.points[1][2], obj.points[2][2]) - .1;
+	var zMax = Math.max(obj.points[0][2], obj.points[1][2], obj.points[2][2]) + .1;
+	console.log(xMin, xMax, yMin, yMax, zMin, zMax);
+	console.log(point);
+	if(point[0] >= xMin && point[0] <= xMax && point[1] >= yMin && point[1] <= yMax && Math.floor(point[2]) >= zMin && Math.floor(point[2]) <= zMax) { 
+		var diff = subtract(point, rayStart);
+		return Math.sqrt(dot(diff, diff));
+	}
+	
+	return;
+	
 }
 
 // surface
@@ -393,7 +402,7 @@ function getColor(currentObject, ray, normal) {
 		shadowRay.start.y = temp[1];
 		shadowRay.start.z = temp[2];
 		var objectReturn = detectCollision(shadowRay);
-		if (objectReturn.distance == null || objectReturn.object == currentObject.object) { // Doesn't hit anything
+		if (objectReturn.distance === Infinity || objectReturn.object == currentObject.object) { // Doesn't hit anything
 			currentObject.object.color.red = currentObject.object.color.red;
 			currentObject.object.color.green = currentObject.object.color.green;
 			currentObject.object.color.blue = currentObject.object.color.blue;
@@ -481,5 +490,7 @@ function sphereIntersection(obj, ray) {
 	var d = Math.pow(obj.radius, 2) - rayStartToSphhereLength + Math.pow(vectorLength, 2);
 	if(d >= 0) {
 		return vectorLength - Math.sqrt(d);
+	} else {
+		return;
 	}
 }
