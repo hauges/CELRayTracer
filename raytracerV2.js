@@ -60,7 +60,7 @@ var camera = {
 };
 
 var lights = [ // can add as many lights as possible
-    /*{
+    {
         x: width/2,
         y: height,
         z: depth/2
@@ -69,7 +69,7 @@ var lights = [ // can add as many lights as possible
 		 x: width/2, 
 		 y: 0, 
 		 z: depth/2
-	 }, */
+	 },
 	 {
         x: 0,
         y: height/2,
@@ -264,8 +264,7 @@ function unitVec(x, y, z) {
 }
 
 function trace(ray, depth, xDir, yDir) {
-    var firstObj = detectCollision(ray);
-
+    var firstObj = detectCollision(ray, null);
     if(firstObj.distance === Infinity) {
 		 var tempColor = {
 			red: backgroundColor.red,
@@ -304,7 +303,7 @@ function triangleNormal(obj) {
 }
 
 // intersectScene
-function detectCollision(ray) {
+function detectCollision(ray, ignoreObject) {
 	var firstObj = {
 		distance: Infinity,
 		object: null
@@ -312,6 +311,10 @@ function detectCollision(ray) {
 	for(var i = 0; i < objects.length; i++) {
 	// check to see if there is an intersection and if its closer than firstObj
 		var obj = objects[i];
+		if(obj == ignoreObject) {
+			//console.log("Same");
+			continue;
+		}
 		if(obj.type == 'sphere') {
 			var distance = sphereIntersection(obj, ray);
 			if(distance < firstObj.distance) {
@@ -362,7 +365,7 @@ function getColorSphere(object, ray) {
         scaleFactor = scaleFactor + Math.max(dot(pointToLightNormal,pointNormal), 0);
         var toLightRay = {
             start: point,
-            vector: pointToLightNormal
+            vector: new Vector(pointToLightNormal[0], pointToLightNormal[1], pointToLightNormal[2])
         };
         var ray0 = pointToLightNormal;
         var len = normalize(ray0, 0);
@@ -375,11 +378,12 @@ function getColorSphere(object, ray) {
         toLightRay.start.y = temp[2];
         toLightRay.start.z = temp[2];
         
-        var objectReturn =detectCollision(toLightRay);
+        var objectReturn = detectCollision(toLightRay, object.object);
         if(objectReturn === Infinity ||  objectReturn.object == object.object) {
+			  // Does not hit anything
         } else if(objectReturn.object != null) {
-            console.log('shadow');
-            castedShadow = 0.95;
+            // console.log('shadow');
+            castedShadow = 0.4;
             // getColor(objectReturn, toLightRay);
         }
     }
@@ -388,7 +392,7 @@ function getColorSphere(object, ray) {
     //console.log(pointToLightNormal);
 
     //console.log(scaleFactor);
-    scaleFactor = Math.max(scaleFactor, 0.50); //* castedShadow;
+    scaleFactor = Math.max(scaleFactor, 0.50) * castedShadow;
     //console.log(scaleFactor);
 
     var newColor = {
