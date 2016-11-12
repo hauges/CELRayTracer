@@ -60,30 +60,30 @@ var camera = {
 };
 
 var lights = [ // can add as many lights as possible
-    {
+    /*{
         x: width / 2,
-        y: height,
+        y: height * 4/5,
+        z: depth / 2
+    },*/
+	{
+        x: width * 3/4,
+        y: height * 4/5,
         z: depth / 2
     },
 	{
-        x: width,
-        y: height / 2,
-        z: depth / 2
-    },
-	{
-        x: 0,
-        y: height / 2,
+        x: width * 1/4,
+        y: height * 4/5,
         z: depth / 2
     }
 ];
 
 var objects = [ // add objects here (needs atleas a color and points)
-    {
+    /*{
         type: 'sphere',
         center: {
-            x: 100,
+            x: width / 2,
             y: height / 2,
-            z: depth / 2 + 200
+            z: -100
         },
         radius: 50,
 		color: {
@@ -157,13 +157,13 @@ var objects = [ // add objects here (needs atleas a color and points)
 			alpha: 1
 		},
 		reflective: false
-    },
+    },*/
 	{
         type: 'sphere',
         center: {
             x: width / 2,
-            y: height,
-            z: depth
+            y: height / 2,
+            z: depth / 2
         },
         radius: 75,
 		color: {
@@ -182,9 +182,9 @@ var objects = [ // add objects here (needs atleas a color and points)
 			vec3(512, 0, 512)
 		],
 		color: {
-			red: .5,
-			green: .5,
-			blue: .5,
+			red: .7,
+			green: .7,
+			blue: .7,
 			alpha: 1
 		},
 		lighting: true,
@@ -362,10 +362,10 @@ function getSquareColor(object, ray, depth, xDir, yDir) {
 		var p0 = vec3(ray.start.x, ray.start.y, ray.start.z);
 		var p1 = vec3(point.x, point.y, point.z);
 		var n = vec3(object.object.normal.x, object.object.normal.y, object.object.normal.z);
-		var r = subtract( scale( dot( scale(2, subtract(p0, p1)), n), n ), subtract(p0, p1) );
-		console.log(vec3(ray.vector.x, ray.vector.y, ray.vector.z));
-		console.log(r);
-		console.log('');
+		var r = subtract(scale(dot(scale(2, subtract(p0, p1)), n), n), subtract(p0, p1));
+		//console.log(vec3(ray.vector.x, ray.vector.y, ray.vector.z));
+		//console.log(r);
+		//console.log('');
 		var reflection = {
 			start: point,
 			vector: new Vector(diff[0], diff[1], diff[2])
@@ -373,9 +373,9 @@ function getSquareColor(object, ray, depth, xDir, yDir) {
 		var colorReflection = trace(reflection, ++depth, xDir, yDir);
 		if (colorReflection) {
 			var color4 = vec4(
-				colorReflection.red, 
-				colorReflection.green, 
-				colorReflection.blue, 
+				colorReflection.red,
+				colorReflection.green,
+				colorReflection.blue,
 				colorReflection.alpha
 			);
 			var colorScaling = scale(.2, color4);
@@ -386,13 +386,18 @@ function getSquareColor(object, ray, depth, xDir, yDir) {
 				alpha: color4[3]
 			};
 		}
-		return {
-			red: 1,
-			blue: 1,
-			green: 1,
-			alpha: 1
-		};
 	}
+
+	var scaleFactor = getShadding(point, object, ray, depth, xDir, yDir, normal3);
+
+	var newColor = {
+		red: color.red * scaleFactor,
+		green: color.green * scaleFactor,
+		blue: color.blue * scaleFactor,
+		alpha: color.alpha
+	};
+
+	return newColor;
 }
 
 function getColorSphere(object, ray, depth, xDir, yDir) {
@@ -403,40 +408,9 @@ function getColorSphere(object, ray, depth, xDir, yDir) {
         z: ray.start.z + ray.vector.z * object.distance
     };
 
-    var pointNormal = normalOf(equation3D(object.object.center, point));
-    var pointToLightNormal;
-    var scaleFactor = 0.0;
-    var castedShadow = 1;
+	var pointNormal = normalOf(equation3D(object.object.center, point));
 
-    for (var i = 0; i < lights.length; i++) {
-        pointToLightNormal = normalOf(equation3D(point, lights[i]));
-        scaleFactor = scaleFactor + Math.max(dot(pointToLightNormal, pointNormal), 0);
-        var toLightRay = {
-            start: point,
-            vector: new Vector(pointToLightNormal[0], pointToLightNormal[1], pointToLightNormal[2])
-        };
-        var ray0 = pointToLightNormal;
-        var len = normalize(ray0, 0);
-        var temp = add(
-            vec3(toLightRay.start.x, toLightRay.start.y, toLightRay.start.z),
-            scale(.00001, len)
-        );
-		if (castedShadow != 1 && Math.max(dot(pointToLightNormal, pointNormal), 0) != 0) {
-			castedShadow = castedShadow / .65;
-		}
-        toLightRay.start.x = temp[0];
-        toLightRay.start.y = temp[2];
-        toLightRay.start.z = temp[2];
-
-        var objectReturn = detectCollision(toLightRay, object.object);
-        if (objectReturn === Infinity || objectReturn.object == object.object) {
-			// Does not hit anything
-        } else if (objectReturn.object != null) {
-            castedShadow = castedShadow * .65;
-        }
-    }
-
-    scaleFactor = Math.max(scaleFactor, 0.50) * Math.min(castedShadow, 1);
+    scaleFactor = getShadding(point, object, ray, depth, xDir, yDir, pointNormal);
 
     var newColor = {
         red: color.red * scaleFactor,
@@ -513,4 +487,42 @@ function squareIntersection(obj, ray) {
 	}
 
 	return;
+}
+
+function getShadding(point, object, ray, depth, xDir, yDir, pointNormal) {
+    var pointToLightNormal;
+    var scaleFactor = 0.0;
+    var castedShadow = 1;
+
+	for (var i = 0; i < lights.length; i++) {
+        pointToLightNormal = normalOf(equation3D(point, lights[i]));
+        scaleFactor = scaleFactor + Math.max(dot(pointToLightNormal, pointNormal), 0);
+        var toLightRay = {
+            start: point,
+            vector: new Vector(pointToLightNormal[0], pointToLightNormal[1], pointToLightNormal[2])
+        };
+        var ray0 = pointToLightNormal;
+        var len = normalize(ray0, 0);
+        var temp = add(
+            vec3(toLightRay.start.x, toLightRay.start.y, toLightRay.start.z),
+            scale(.00001, len)
+        );
+		/*if (castedShadow != 1 && Math.max(dot(pointToLightNormal, pointNormal), 0) != 0) {
+			castedShadow = castedShadow / .65;
+		}*/
+        toLightRay.start.x = temp[0];
+        toLightRay.start.y = temp[2];
+        toLightRay.start.z = temp[2];
+
+        var objectReturn = detectCollision(toLightRay, object.object);
+        if (objectReturn === Infinity || objectReturn.object == object.object) {
+			// Does not hit anything
+        } else if (objectReturn.object != null) {
+            castedShadow = castedShadow * .65;
+        }
+    }
+
+    scaleFactor = Math.max(scaleFactor, 0.00) * Math.min(castedShadow, 1);
+
+	return scaleFactor;
 }
