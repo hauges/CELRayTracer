@@ -399,8 +399,9 @@ function unitVec(x, y, z) {
     return new Vector(x / size, y / size, z / size);
 }
 
+// traces the screen for objetcs
 function trace(ray, depth, xDir, yDir) {
-
+	// only 4 reflections alowed by a ray
 	if (depth > 4) {
 		return;
 	}
@@ -436,7 +437,9 @@ function triangleNormal(obj) {
 	return vCross;
 }
 
+// determines if a object was intersected 
 function detectCollision(ray, ignoreObject, maxRayLength) {
+	// object created to store the distance of the first object intersected by the ray
 	var firstObj = {
 		distance: Infinity,
 		object: null
@@ -466,6 +469,7 @@ function detectCollision(ray, ignoreObject, maxRayLength) {
     return firstObj;
 }
 
+// gets the color of the object
 function getColor(object, ray, depth, xDir, yDir) {
 	if (object.object.type == 'sphere') {
 		return getColorSphere(object, ray, depth, xDir, yDir);
@@ -474,10 +478,10 @@ function getColor(object, ray, depth, xDir, yDir) {
 	}
 }
 
-
+// gets the shadow/color projected on a square and the shading
 function getSquareColor(object, ray, depth, xDir, yDir) {
-	var color = object.object.color;
-    var point = {
+	var color = object.object.color; // color of object
+    var point = { // starting point
         x: ray.start.x + ray.vector.x * object.distance,
         y: ray.start.y + ray.vector.y * object.distance,
         z: ray.start.z + ray.vector.z * object.distance
@@ -518,6 +522,7 @@ function getSquareColor(object, ray, depth, xDir, yDir) {
 		}
 	}
 
+	// scale factor to dim an object to shade it
 	var scaleFactor = getShadding(point, object, ray, depth, xDir, yDir, normal3);
 
 	var newColor = {
@@ -530,9 +535,10 @@ function getSquareColor(object, ray, depth, xDir, yDir) {
 	return newColor;
 }
 
+// gets the shadow/color projected on a circle and the shading
 function getColorSphere(object, ray, depth, xDir, yDir) {
-    var color = object.object.color;
-    var point = {
+    var color = object.object.color; // color of object
+    var point = { // starting point
         x: ray.start.x + ray.vector.x * object.distance,
         y: ray.start.y + ray.vector.y * object.distance,
         z: ray.start.z + ray.vector.z * object.distance
@@ -540,6 +546,7 @@ function getColorSphere(object, ray, depth, xDir, yDir) {
 
 	var pointNormal = normalOf(equation3D(object.object.center, point));
 
+	// scale factor to dim an object to shade it
     scaleFactor = getShadding(point, object, ray, depth, xDir, yDir, pointNormal);
 
     var newColor = {
@@ -556,6 +563,7 @@ function equation3D(point1, point2) {
 	return unitVec(point2.x - point1.x, point2.y - point1.y, point2.z - point1.z);
 }
 
+// determines the intersection of a sphere
 function sphereIntersection(obj, ray, maxRayLength) {
     var cx = obj.center.x;
     var cy = obj.center.y;
@@ -583,6 +591,7 @@ function sphereIntersection(obj, ray, maxRayLength) {
     }
 }
 
+// determines the intersection of a square
 function squareIntersection(obj, ray) {
 	//var rayStart = vec3(ray.start.x,ray.start.y, ray.start.z);
 	var raySx = ray.start.x;
@@ -619,6 +628,7 @@ function squareIntersection(obj, ray) {
 	return;
 }
 
+// determnes shading
 function getShadding(point, object, ray, depth, xDir, yDir, pointNormal) {
     var pointToLightNormal;
     var scaleFactor = 0.0;
