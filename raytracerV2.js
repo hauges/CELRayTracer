@@ -91,7 +91,8 @@ var objects = [ // add objects here (needs atleas a color and points)
 			green: 1.0,
 			blue: 0.0,
 			alpha: 1.0
-		}
+		},
+		reflective: false
     },
 	 {
         type: 'sphere',
@@ -106,7 +107,8 @@ var objects = [ // add objects here (needs atleas a color and points)
 			green: .5,
 			blue: 0.0,
 			alpha: 1.0
-		}
+		},
+		reflective: false
     },
 	{
         type: 'sphere',
@@ -121,7 +123,8 @@ var objects = [ // add objects here (needs atleas a color and points)
 			green: 1,
 			blue: 0,
 			alpha: 1
-		}
+		}, 
+		reflective: false
     },
     {
         type: 'sphere',
@@ -136,7 +139,8 @@ var objects = [ // add objects here (needs atleas a color and points)
 			green: 1,
 			blue: 0,
 			alpha: 1
-		}
+		}, 
+		reflective: false
     },
     {
         type: 'sphere',
@@ -151,14 +155,31 @@ var objects = [ // add objects here (needs atleas a color and points)
 			green: 1,
 			blue: 0,
 			alpha: 1
-		}
+		}, 
+		reflective: false
     },
 	 {
-		type: 'triangle',
+        type: 'sphere',
+        center: {
+            x: width/2,
+            y: height,
+            z:0
+        },
+        radius: 75,
+		color: {
+			red: 1,
+			green: 0,
+			blue: 1,
+			alpha: 1
+		}, 
+		reflective: false
+    },
+	 {
+		type: 'square',
 		points: [
-			vec3(250, 250, 10),
-			vec3(250, 260, 10),
-			vec3(240, 250, 10)
+			vec3(0, 256, 512),
+			vec3(0, 512 + 256, 512),
+			vec3(512, 512+ 256, 512)
 			],
 		color: {
 			red: .5, 
@@ -167,7 +188,8 @@ var objects = [ // add objects here (needs atleas a color and points)
 			alpha: 1
 		}, 
 		lighting: true,
-		normal : null
+		normal : null, 
+		reflective: true
 	 }
 ];
 
@@ -191,20 +213,6 @@ window.onload = function init() {
 	maxY = height;
 	aspect = canvas.width/canvas.height;
 	gl.clearColor(1, 1, 1, 1);
-	
-	// for(var i = -1; i < 1; i+= 2/canvas.width) {
-		// for(var j = 1; j > -1; j-= 2/canvas.height) {
-			// vertices.push(vec2(i, j));
-			// frameBuffer.push(vec4(Math.abs(i), Math.abs(j), Math.abs(i - j), 1));
-		// }
-	// }
-	
-	// vertices.push(vec2(0, 0));
-	// vertices.push(vec2(2/canvas.width, 2/canvas.height));
-	// frameBuffer.push(vec3(0, 1, 0));
-	// frameBuffer.push(vec3(1, 0, 0));
-	
-	// vertices.push(vec2(-1, 1));
 	
 	createImage();
 	
@@ -254,7 +262,6 @@ function render() {
 
     // draw the frame image here
 	
-	
 	gl.drawArrays(gl.POINTS, 0, vertices.length);
 }
 
@@ -264,6 +271,10 @@ function unitVec(x, y, z) {
 }
 
 function trace(ray, depth, xDir, yDir) {
+	
+	if (depth > 4) {
+		return;
+	}
     var firstObj = detectCollision(ray, null);
     if(firstObj.distance === Infinity) {
 		 var tempColor = {
@@ -275,7 +286,7 @@ function trace(ray, depth, xDir, yDir) {
         return tempColor;
     }
 
-    return getColor(firstObj, ray);
+    return getColor(firstObj, ray, depth, xDir, yDir);
 }
 
 function normalOf(vector) {
@@ -288,12 +299,6 @@ function normalOf(vector) {
 }
 
 function triangleNormal(obj) {
-	// var v1x =obj.points[0][0] - obj.points[1][0];
-	// var v1y =obj.points[0][1] - obj.points[1][1];
-	// var v1z =obj.points[0][2] - obj.points[1][2];
-	// var v2x =obj.points[2][0] - obj.points[1][0];
-	// var v2y =obj.points[2][1] - obj.points[1][1];
-	// var v2z =obj.points[2][2] - obj.points[1][2];
 	var vector1 = subtract(obj.points[0], obj.points[1]);
 	var vector2 = subtract(obj.points[2], obj.points[1]);
 	// Normal
@@ -302,7 +307,6 @@ function triangleNormal(obj) {
 	return vCross;
 }
 
-// intersectScene
 function detectCollision(ray, ignoreObject) {
 	var firstObj = {
 		distance: Infinity,
@@ -312,7 +316,6 @@ function detectCollision(ray, ignoreObject) {
 	// check to see if there is an intersection and if its closer than firstObj
 		var obj = objects[i];
 		if(obj == ignoreObject) {
-			//console.log("Same");
 			continue;
 		}
 		if(obj.type == 'sphere') {
@@ -322,8 +325,8 @@ function detectCollision(ray, ignoreObject) {
 				firstObj.object = obj;
 			}
 		}
-		if (obj.type == 'triangle' ) {
-			var distance = triangleIntersection(obj, ray);
+		if (obj.type == 'square' ) {
+			var distance = squareIntersection(obj, ray);
 			if(distance < firstObj.distance) {
 				firstObj.distance = distance;
 				firstObj.object = obj;
@@ -334,26 +337,60 @@ function detectCollision(ray, ignoreObject) {
     return firstObj;
 }
 
-// surface
-function getColor(object, ray) {
+function getColor(object, ray, depth, xDir, yDir) {
 	if(object.object.type == 'sphere') {
-		return getColorSphere(object, ray);
-	} else if(object.object.type == 'triangle') {
-		return backgroundColor;
+		return getColorSphere(object, ray, depth, xDir, yDir);
+	} else if(object.object.type == 'square') {
+		return getSquareColor(object, ray, depth, xDir, yDir);
 	}
-
 }
 
-function getColorSphere(object, ray) {
-    var color = object.object.color; // will require a lot more for lighting 
+
+function getSquareColor(object, ray, depth, xDir, yDir) {
+	var color = object.object.color; 
     var point = {
         x: ray.start.x + ray.vector.x * object.distance,
         y: ray.start.y + ray.vector.y * object.distance,
         z: ray.start.z + ray.vector.z * object.distance
     };
-    //console.log(ray.start.x,ray.start.y, ray.start.z);
-    //console.log(ray.vector.x, ray.vector.y, ray.vector.z);
-    //console.log(point.x, point.y, point.z);
+	 if (object.object.reflective) {
+		 
+		var rayV3 = vec3(ray.vector.x, ray.vector.y, ray.vector.z);
+		var normal3 = vec3(object.object.normal.x, object.object.normal.y, object.object.normal.z);
+		var scaling = scale(dot(rayV3, normal3), normal3);
+		var diff = subtract(rayV3, scale(2, scaling));
+		 var reflection = {
+			 point: point,
+			 vector: new Vector(diff[0], diff[1], diff[2])
+		 };
+		 var colorReflection = trace(ray, ++depth, xDir, yDir);
+		 
+		 if (colorReflection) {
+			 var color4 = vec4(colorReflection.red, colorReflection.green, colorReflection.blue, colorReflection.alpha);
+			 var colorScaling = scale(.2, color4); 
+			 return {
+				 red: color4[0], 
+				 green: color4[1], 
+				 blue: color4[2],
+				 alpha: color4[3]
+			 };
+		 }
+		 return {
+			 red: 1,
+			 blue: 1,
+			 green: 1, 
+			 alpha: 1
+		 };
+	 }
+}
+
+function getColorSphere(object, ray, depth, xDir, yDir) {
+    var color = object.object.color; 
+    var point = {
+        x: ray.start.x + ray.vector.x * object.distance,
+        y: ray.start.y + ray.vector.y * object.distance,
+        z: ray.start.z + ray.vector.z * object.distance
+    };
 
     var pointNormal = normalOf( equation3D(object.object.center, point) );
     var pointToLightNormal;
@@ -382,20 +419,13 @@ function getColorSphere(object, ray) {
         
         var objectReturn = detectCollision(toLightRay, object.object);
         if(objectReturn === Infinity ||  objectReturn.object == object.object) {
-			  // Does not hit anything
+				// Does not hit anything
         } else if(objectReturn.object != null) {
-            // console.log('shadow');
             castedShadow = castedShadow * .65;
-            // getColor(objectReturn, toLightRay);
         }
     }
-
-    //console.log(pointNormal);
-    //console.log(pointToLightNormal);
-
-    //console.log(scaleFactor);
+	 
     scaleFactor = Math.max(scaleFactor, 0.50) * Math.min(castedShadow,1);
-    //console.log(scaleFactor);
 
     var newColor = {
         red: color.red * scaleFactor,
@@ -403,9 +433,6 @@ function getColorSphere(object, ray) {
         blue: color.blue * scaleFactor,
         alpha: color.alpha
     };
-
-    //console.log(newColor);
-    //console.log('');
 
     return newColor;
 }
@@ -441,7 +468,7 @@ function sphereIntersection(obj, ray) {
     }
 }
 
-function triangleIntersection(obj, ray) {
+function squareIntersection(obj, ray) {
 	//var rayStart = vec3(ray.start.x,ray.start.y, ray.start.z);
 	var raySx = ray.start.x;
 	var raySy = ray.start.y;
@@ -454,25 +481,23 @@ function triangleIntersection(obj, ray) {
 	var vCrossNorm = triangleNormal(obj);
 	// console.log(obj.points);
 	var vCross = new Vector(vCrossNorm[0],vCrossNorm[1],vCrossNorm[2]);
+	obj.normal = vCross;
 	
 	var denom = rayVx * vCross.x + rayVy * vCross.y + rayVz * vCross.z;
-	//var denom = dot(vec3(rayVx, rayVy, rayVz), vec3(vCross.x, vCross.y, vCross.z));
 	if (denom == 0) {
 		return ;
 	}
-	var time = (dot(subtract(vec3(raySx, raySy, raySz), obj.points[1]), vec3(vCross.x, vCross.y, vCross.z)))/denom;
+	var time = (dot(subtract(obj.points[1], vec3(raySx, raySy, raySz)), vec3(vCross.x, vCross.y, vCross.z)))/denom;
 	var point = add(vec3(raySx, raySy, raySz), scale(time, vec3(rayVx, rayVy, rayVz)));
-	// console.log(point);
+	
 	var xMin = Math.min(obj.points[0][0], obj.points[1][0], obj.points[2][0]) - .1;
 	var xMax = Math.max(obj.points[0][0], obj.points[1][0], obj.points[2][0]) + .1;
 	var yMin = Math.min(obj.points[0][1], obj.points[1][1], obj.points[2][1]) - .1;
 	var yMax = Math.max(obj.points[0][1], obj.points[1][1], obj.points[2][1]) + .1;
 	var zMin = Math.min(obj.points[0][2], obj.points[1][2], obj.points[2][2]) - .1;
 	var zMax = Math.max(obj.points[0][2], obj.points[1][2], obj.points[2][2]) + .1;
-	//console.log(xMin, xMax, yMin, yMax, zMin, zMax);
-	//console.log(point);
 	if(point[0] >= xMin && point[0] <= xMax && point[1] >= yMin && point[1] <= yMax && Math.floor(point[2]) >= zMin && Math.floor(point[2]) <= zMax) { 
-		var diff = subtract(point, rayStart);
+		var diff = subtract(point, vec3(raySx, raySy, raySz));
 		return Math.sqrt(dot(diff, diff));
 	}
 	
