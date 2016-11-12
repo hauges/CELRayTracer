@@ -1,3 +1,7 @@
+// Caleb Henstein
+// Larry Gates
+// Eric Haug
+
 var width = 512;
 var height = 512;
 var depth = 512;
