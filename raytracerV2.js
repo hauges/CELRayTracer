@@ -7,7 +7,7 @@ var minY = 0;
 var maxY = height;
 var minZ = 0;
 var maxZ = depth;
-var maxRayLength = depth;
+var INIT_RAY_LENGTH = depth * 3;
 
 var DEBUG_ARRAY = [];
 
@@ -66,50 +66,223 @@ var lights = [ // can add as many lights as possible
         z: depth / 2
     },*/
 	{
-        x: width * 3/4,
-        y: height * 4/5,
-        z: depth / 2
+        x: width / 2,
+        y: height,
+        z: 0
     },
 	{
-        x: width * 1/4,
-        y: height * 4/5,
-        z: depth / 2
+        x: width / 2 - 150,
+        y: height,
+        z: 50
     }
+
 ];
 
 var objects = [ // add objects here (needs atleas a color and points)
-    /*{
-        type: 'sphere',
-        center: {
-            x: width / 2,
-            y: height / 2,
-            z: -100
-        },
-        radius: 50,
-		color: {
-			red: 0.0,
-			green: 1.0,
-			blue: 0.0,
-			alpha: 1.0
-		},
-		reflective: false
-    },
 	{
-        type: 'sphere',
-        center: {
-            x: 300,
-            y: height / 2,
-            z: depth / 2
-        },
-        radius: 40,
-		color: {
-			red: 1.0,
-			green: .5,
-			blue: 0.0,
-			alpha: 1.0
+		type: 'sphere',
+		center: {
+			x: 256,
+			y: 50,
+			z: 300
 		},
-		reflective: false
-    },
+		radius: 110,
+		color: {
+			red: 1,
+			green: 1,
+			blue: 1,
+			alpha: 1
+		},
+		normal: null,
+		lighting: true
+	},
+	{
+		type: 'sphere',
+		center: {
+			x: 256,
+			y: 170,
+			z: 300
+		},
+		radius: 90,
+		color: {
+			red: 1,
+			green: 1,
+			blue: 1,
+			alpha: 1
+		},
+		normal: null,
+		lighting: true
+	},
+	{
+		type: 'sphere',
+		center: {
+			x: 256,
+			y: 290,
+			z: 300
+		},
+		radius: 80,
+		color: {
+			red: 1,
+			green: 1,
+			blue: 1,
+			alpha: 1
+		},
+		normal: null,
+		lighting: true
+	},
+	{
+		type: 'sphere',
+		center: {
+			x: 235,
+			y: 310,
+			z: 230
+		},
+		radius: 10,
+		color: {
+			red: 0,
+			green: 0,
+			blue: 0,
+			alpha: 1
+		},
+		normal: null,
+		lighting: true
+	},
+	{
+		type: 'sphere',
+		center: {
+			x: 277,
+			y: 310,
+			z: 230
+		},
+		radius: 10,
+		color: {
+			red: 0,
+			green: 0,
+			blue: 0,
+			alpha: 1
+		},
+		normal: null,
+		lighting: true
+	},
+	{
+		type: 'sphere',
+		center: {
+			x: 218,
+			y: 270,
+			z: 230
+		},
+		radius: 10,
+		color: {
+			red: 0,
+			green: 0,
+			blue: 0,
+			alpha: 1
+		},
+		normal: null,
+		lighting: true
+	},
+	{
+		type: 'sphere',
+		center: {
+			x: 243,
+			y: 260,
+			z: 230
+		},
+		radius: 10,
+		color: {
+			red: 0,
+			green: 0,
+			blue: 0,
+			alpha: 1
+		},
+		normal: null,
+		lighting: true
+	},
+	{
+		type: 'sphere',
+		center: {
+			x: 268,
+			y: 260,
+			z: 230
+		},
+		radius: 10,
+		color: {
+			red: 0,
+			green: 0,
+			blue: 0,
+			alpha: 1
+		},
+		normal: null,
+		lighting: true
+	},
+	{
+		type: 'sphere',
+		center: {
+			x: 293,
+			y: 270,
+			z: 230
+		},
+		radius: 10,
+		color: {
+			red: 0,
+			green: 0,
+			blue: 0,
+			alpha: 1
+		},
+		normal: null,
+		lighting: true
+	},
+	{
+		type: 'sphere',
+		center: {
+			x: 256,
+			y: 185,
+			z: 210
+		},
+		radius: 10,
+		color: {
+			red: 0,
+			green: 0,
+			blue: 0,
+			alpha: 1
+		},
+		normal: null,
+		lighting: true
+	},
+	{
+		type: 'sphere',
+		center: {
+			x: 256,
+			y: 215,
+			z: 210
+		},
+		radius: 10,
+		color: {
+			red: 0,
+			green: 0,
+			blue: 0,
+			alpha: 1
+		},
+		normal: null,
+		lighting: true
+	},
+	{
+		type: 'sphere',
+		center: {
+			x: 256,
+			y: 155,
+			z: 210
+		},
+		radius: 10,
+		color: {
+			red: 0,
+			green: 0,
+			blue: 0,
+			alpha: 1
+		},
+		normal: null,
+		lighting: true
+	},
 	{
         type: 'sphere',
         center: {
@@ -122,54 +295,6 @@ var objects = [ // add objects here (needs atleas a color and points)
 			red: 1,
 			green: 1,
 			blue: 0,
-			alpha: 1
-		},
-		reflective: false
-    },
-    {
-        type: 'sphere',
-        center: {
-            x: 400,
-            y: height / 2,
-            z: depth / 2
-        },
-        radius: 50,
-		color: {
-			red: 1,
-			green: 1,
-			blue: 0,
-			alpha: 1
-		},
-		reflective: false
-    },
-    {
-        type: 'sphere',
-        center: {
-            x: 500,
-            y: height / 2,
-            z: depth / 2
-        },
-        radius: 25,
-		color: {
-			red: 1,
-			green: 1,
-			blue: 0,
-			alpha: 1
-		},
-		reflective: false
-    },*/
-	{
-        type: 'sphere',
-        center: {
-            x: width / 2,
-            y: height / 2,
-            z: depth / 2
-        },
-        radius: 75,
-		color: {
-			red: 1,
-			green: 0,
-			blue: 1,
 			alpha: 1
 		},
 		reflective: false
@@ -191,6 +316,7 @@ var objects = [ // add objects here (needs atleas a color and points)
 		normal: null,
 		reflective: true
 	}
+
 ];
 
 
@@ -274,7 +400,7 @@ function trace(ray, depth, xDir, yDir) {
 	if (depth > 4) {
 		return;
 	}
-    var firstObj = detectCollision(ray, null);
+    var firstObj = detectCollision(ray, null, INIT_RAY_LENGTH);
     if (firstObj.distance === Infinity) {
 		var tempColor = {
 			red: backgroundColor.red,
@@ -306,7 +432,7 @@ function triangleNormal(obj) {
 	return vCross;
 }
 
-function detectCollision(ray, ignoreObject) {
+function detectCollision(ray, ignoreObject, maxRayLength) {
 	var firstObj = {
 		distance: Infinity,
 		object: null
@@ -318,7 +444,7 @@ function detectCollision(ray, ignoreObject) {
 			continue;
 		}
 		if (obj.type == 'sphere') {
-			var distance = sphereIntersection(obj, ray);
+			var distance = sphereIntersection(obj, ray, maxRayLength);
 			if (distance < firstObj.distance) {
 				firstObj.distance = distance;
 				firstObj.object = obj;
@@ -426,7 +552,7 @@ function equation3D(point1, point2) {
 	return unitVec(point2.x - point1.x, point2.y - point1.y, point2.z - point1.z);
 }
 
-function sphereIntersection(obj, ray) {
+function sphereIntersection(obj, ray, maxRayLength) {
     var cx = obj.center.x;
     var cy = obj.center.y;
     var cz = obj.center.z;
@@ -514,7 +640,14 @@ function getShadding(point, object, ray, depth, xDir, yDir, pointNormal) {
         toLightRay.start.y = temp[2];
         toLightRay.start.z = temp[2];
 
-        var objectReturn = detectCollision(toLightRay, object.object);
+		var maxRayVec = (
+			vec3(point.x, point.y, point.z),
+			vec3(lights[i].x, lights[i].y, lights[i].z)
+		);
+
+		var maxRayLength = Math.sqrt(Math.pow(maxRayVec[0], 2) + Math.pow(maxRayVec[1], 2) + Math.pow(maxRayVec[2], 2));
+
+        var objectReturn = detectCollision(toLightRay, object.object, maxRayLength);
         if (objectReturn === Infinity || objectReturn.object == object.object) {
 			// Does not hit anything
         } else if (objectReturn.object != null) {
